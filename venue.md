@@ -1,5 +1,6 @@
 ---
 layout: page
-tite: aaa
+title: Venue
 ---
+
 # About the venue

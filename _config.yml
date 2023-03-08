@@ -27,6 +27,7 @@ url: "https://bach.iem.pw.edu.pl" # the base hostname & protocol for your site, 
 twitter_username: 
 github_username: 
 header_pages:
+  - about-conference.md
   - for-authors.md
   - venue.md
 
