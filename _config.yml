@@ -18,37 +18,16 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: CPEE Conference 2023
-email: your-email@example.com
+title: Computational Problems in Electrical Engineering, CPEE 2023
+email: cpee@iem.pw.edu.pl
 description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+  
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://bach.iem.pw.edu.pl" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: 
 github_username: 
+header_pages:
+  - for-authors.md
+  - venue.md
 
-# Build settings
 theme: minima
-plugins:
-
-# Exclude from processing.
-# The following items will not be processed, by default.
-# Any item listed under the `exclude:` key here will be automatically added to
-# the internal "default list".
-#
-# Excluded items can be processed by explicitly listing the directories or
-# their entries' file path in the `include:` list.
-#
-# exclude:
-#   - .sass-cache/
-#   - .jekyll-cache/
-#   - gemfiles/
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules/
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
