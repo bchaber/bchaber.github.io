@@ -7,8 +7,7 @@ logo:
   mobile_height: "32px"
   mobile_width: "32px"
   desktop: "images/logo/cpee-logo.svg"
-  desktop_height: "137px"
-  desktop_width: "430px"
+  desktop_width: "300px"
 
 home: 
   limit_services: 6
