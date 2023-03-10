@@ -1,32 +1,15 @@
 ---
+title: CPEE 2023
 layout: home
-list_title: Announcements
-title: Computational Problems in Electrical Engineering
+description: Conference on Computational Problems in Electrical Engineering
+intro_image: "images/photos/grybow-city.jpg"
+intro_image_absolute: true
+intro_image_hide_on_mobile: true
+show_call_box: true
 ---
 
-# Conference
+# Join us!
 
-Scope and Location
-
-# Important Dates
-
-Submission deadline
-
-# Sponsors
-
-MESco, ASTAT
-
-# Organization
-
-- Lviv National University, Ukraine
-- Warsaw University of Technology, Poland
-
-# Speakers
-
-# Proceedings
-
-IEEE Xplore, Przegląd Elektrotechniczny
-
-# Sessions
-
-Oral, poster. In-person and On-line.
+We are thrilled to invite you to 24th conference on Computational Problems
+in Electrical Engineering. This year, the event will take place in Grybów,
+Poland.
