@@ -3,9 +3,7 @@ permalink: pretty
 title: 'CPEE 2023'
 
 logo:
-  mobile: "images/logo/logo-mobile.svg"
-  mobile_height: "32px"
-  mobile_width: "32px"
+  mobile:  "images/logo/cpee-logo-mobile.svg"
   desktop: "images/logo/cpee-logo.svg"
   desktop_width: "300px"
 
