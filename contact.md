@@ -1,12 +1,13 @@
 ---
 title: Contact
 layout: page
-description: Services
-intro_image: "images/manypixel/travel.svg"
+description: Contact information
+intro_image: "images/manypixels/chat.svg"
 intro_image_absolute: true
 intro_image_hide_on_mobile: false
 ---
 
-# Services that grow with your business
+# Contact
 
-Aliquam erat volutpat. Morbi nisl tortor, dignissim eget efficitur vel, auctor non felis. Fusce quis viverra mi. Aenean quis massa pretium, ullamcorper nisi eget, hendrerit odio.
+If you have any questions or concerns, don't hesistate and write us at cpee@iem.pw.edu.pl
+We will try to get back to you as soon as possible.

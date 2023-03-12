@@ -3,25 +3,28 @@ title: Venue
 layout: page
 description: Venue
 bodyClass: page-venue
-intro_image: "images/manypixel/traveling.svg"
+intro_image: "images/manypixels/traveling.svg"
 intro_image_absolute: true
 intro_image_hide_on_mobile: false
 ---
 
 # Venue 
 
-Grybów is a small town on the south of Poland.
-It is a lovely place to spend near the nature.
+The conference will be held in a small and picturesque town at south of Poland. The town has a has a long (over 670 years!) history, and is exceptional as it has the steepest town square in medieval Europe.
 
-Financial accounting and financial reporting are often used as synonyms.
+Grybów is surrounded with mountains which gives this small town an unforgetable charm.
+The conference hotel is situated on a hill in the vicinity of the forest, near the Biała (White) River. Four hotel pavilions are located on a large green areas -- creating favorable conditions for leisure and educational work. A beautiful scenic mountains around the facility encourage followers to active leisure trips. Marked hiking trails from Grybów to nearly hills.
 
-1. According to International Financial Reporting Standards: the objective of financial reporting is:
-2. To provide financial information that is useful to existing and potential investors, lenders and other creditors in making decisions about providing resources to the reporting entity.
-3. According to the European Accounting Association:
+![Town square in Grybów](/images/photos/grybow-city.jpg){:class="full-width"}
+*A town square in Grybów*
 
+![Railroad bridge near Grybów](/images/photos/grybow-bridge.jpg){:class="full-width"}
+*A railroad bridge on Białka river near Grybów*
 
-Relevance is the capacity of the financial information to influence the decision of its users. The ingredients of relevance are the predictive value and confirmatory value. Materiality is a sub-quality of relevance.
+*drone shots used with permission from www.dron.mikos.pl*
 
-![Town square in Grybów](/images/photos/grybow-city.jpg)
+![Building B of the conference center](/images/photos/conference-center-building-B.jpg){:class="full-width"}
+*Building B of the conference center*
 
-![Railroad bridge near Grybów](/images/photos/grybow-bridge.jpg)
+![A room in the conference center](/images/photos/conference-center-room-in-main-building.jpg){:class="full-width"}
+*A 3-person room in the main building of the conference center*

@@ -3,7 +3,7 @@ title: About
 layout: page
 description: 24th conference on Computational Problems in Electrical Engineering
 bodyClass: page-about
-intro_image: "images/manypixel/conference.svg"
+intro_image: "images/manypixels/conference.svg"
 intro_image_absolute: true
 intro_image_hide_on_mobile: false
 ---

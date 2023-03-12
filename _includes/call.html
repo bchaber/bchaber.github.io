@@ -1,19 +1,6 @@
 <div class="call">
   <div class="call-box-top">
-    {% if site.data.contact.phone %}
-        <div class="call-phone"><strong>Phone: </strong> {{ site.data.contact.phone }} </div>
-    {% endif %}
-    {% if site.data.contact.email %}
-    <div class="call-email"><strong>Email: </strong>
-      <a href="mailto:{{ .site.data.contact.email }}">
-        {{ site.data.contact.email }}
-      </a>
-    </div>
-    {% endif %}
+   <p>The address of the conference center: Chłodna 16, 33-330 Grybów, Poland</p>
+   <iframe width='100%' height='400px' src="https://api.mapbox.com/styles/v1/chaberb/clf4hafbq005901nh5j9d6w4c.html?title=false&access_token=pk.eyJ1IjoiY2hhYmVyYiIsImEiOiJjazZzMmhocnQwYmNkM2dudnFkNDlnendqIn0.bm_qlBbE9Nm7o4Xhb3Xipw&zoomwheel=false#15.78/49.625354/20.945749" title="Streets" style="border:none;"></iframe>
   </div>
-    {% if include.show_button %}
-      <div class="call-box-bottom">
-        <a href="{{ site.data.contact.contact_button_link }}" class="button">Contact</a>
-      </div>
-    {% endif %}
 </div>
