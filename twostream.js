@@ -209,9 +209,9 @@
   // ---------- Rendering ----------
   function render(sim, ctx) {
     const { p, N, x, v, stream } = sim;
-    const W = ctx.canvas.width;
-    const H = ctx.canvas.height;
-    
+    const W = ctx.canvas._logicalW || ctx.canvas.width;
+    const H = ctx.canvas._logicalH || ctx.canvas.height;
+
     // Plot area (margins for axes)
     const ML = 56, MR = 16, MT = 24, MB = 40;
     const PW = W - ML - MR;
@@ -248,19 +248,24 @@
 
     // --- Particle scatter ---
     // Use ImageData for speed when N is large.
-    const img = ctx.getImageData(ML, MT, PW, PH);
+    // ImageData operates in DEVICE pixels (ignores ctx transforms),
+    // so we allocate it at PW*DPR × PH*DPR and put it without transform.
+    const DPR = ctx.canvas.width / (ctx.canvas._logicalW || ctx.canvas.width);
+    const dPW = (PW * DPR) | 0;
+    const dPH = (PH * DPR) | 0;
+    const img = ctx.getImageData(ML * DPR, MT * DPR, dPW, dPH);
     const data = img.data;
 
     const cA = hexToRgb(p.colorA);
     const cB = hexToRgb(p.colorB);
 
-    const sxScale = PW / p.L;
-    const syScale = PH / (2 * p.vRange);
-    const yMid = PH / 2;
+    const sxScale = dPW / p.L;
+    const syScale = dPH / (2 * p.vRange);
+    const yMid = dPH / 2;
 
     function plot(px, py, c) {
-      if (px < 0 || px >= PW || py < 0 || py >= PH) return;
-      const idx = (py * PW + px) * 4;
+      if (px < 0 || px >= dPW || py < 0 || py >= dPH) return;
+      const idx = (py * dPW + px) * 4;
       // Additive-ish blend so overlaps darken nicely
       data[idx]     = (data[idx]     * 0.3 + c.r * 0.7) | 0;
       data[idx + 1] = (data[idx + 1] * 0.3 + c.g * 0.7) | 0;
@@ -279,7 +284,8 @@
       const c = stream[i] === 0 ? cA : cB;
       plot(px, py, c);
     }
-    ctx.putImageData(img, ML, MT);
+    // putImageData ignores transform — use device-pixel coords
+    ctx.putImageData(img, ML * DPR, MT * DPR);
 
     // Axes frame
     ctx.strokeStyle = DEFAULTS.axis;
@@ -334,8 +340,8 @@
     ctx.fillStyle = DEFAULTS.text;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('+v₀', lx + 16, ly + 5);
-    ctx.fillText('−v₀', lx + 16, ly + 21);
+    ctx.fillText('stream A  (+v₀)', lx + 16, ly + 5);
+    ctx.fillText('stream B  (−v₀)', lx + 16, ly + 21);
   }
 
   function hexToRgb(h) {
@@ -345,12 +351,24 @@
 
   // ---------- Public API ----------
   function start(canvas, opts) {
-    canvas.width = canvas.clientWidth * 1;
-    canvas.height = canvas.clientHeight * 1;
+    // Scale backing store for HiDPI (2× by default)
+    const DPR = (opts && opts.dpr) || 2;
+    const cssW = canvas.width;
+    const cssH = canvas.height;
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width  = cssW * DPR;
+    canvas.height = cssH * DPR;
     const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+    // Render functions read ctx.canvas.width/height — give them the CSS size
+    // by exposing a logical-size shim.
+    Object.defineProperty(ctx.canvas, '_logicalW', { value: cssW });
+    Object.defineProperty(ctx.canvas, '_logicalH', { value: cssH });
+
     const sim = createSim(opts);
     let running = true;
-    ctx.scale(1, 1);
+
     function frame() {
       if (!running) return;
       // a few sub-steps per frame for smoother dynamics
@@ -360,6 +378,7 @@
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+
     return {
       sim,
       stop:   () => { running = false; },
