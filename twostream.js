@@ -209,9 +209,9 @@
   // ---------- Rendering ----------
   function render(sim, ctx) {
     const { p, N, x, v, stream } = sim;
-    const W = ctx.canvas.width;
-    const H = ctx.canvas.height;
-
+    const W = ctx.canvas.clientWidth * 2;
+    const H = ctx.canvas.clientHeight * 2;
+    ctx.scale(2, 2);
     // Plot area (margins for axes)
     const ML = 56, MR = 16, MT = 24, MB = 40;
     const PW = W - ML - MR;
