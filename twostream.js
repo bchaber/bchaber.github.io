@@ -345,12 +345,12 @@
 
   // ---------- Public API ----------
   function start(canvas, opts) {
-    canvas.width = canvas.clientWidth * 2;
-    canvas.height = canvas.clientHeight * 2;
+    canvas.width = canvas.clientWidth * 1;
+    canvas.height = canvas.clientHeight * 1;
     const ctx = canvas.getContext('2d');
     const sim = createSim(opts);
     let running = true;
-    ctx.scale(2, 2);
+    ctx.scale(1, 1);
     function frame() {
       if (!running) return;
       // a few sub-steps per frame for smoother dynamics
