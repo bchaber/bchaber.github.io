@@ -358,7 +358,7 @@
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-    ctx.scale(2.0);
+    ctx.scale(2.0, 2.0);
     return {
       sim,
       stop:   () => { running = false; },
