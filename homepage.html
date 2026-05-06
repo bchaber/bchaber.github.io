@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. A. N. Researcher — Homepage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ---------- IEEE-style page ---------- */
+  :root {
+    --paper: #fefefe;
+    --ink: #1a1a1a;
+    --ink-soft: #444;
+    --rule: #cfcfcf;
+    --link: oklch(46% 0.13 250);
+    --link-visited: oklch(40% 0.10 290);
+    --figure-bg: #f6f6f4;
+    --figure-stripe: #ececea;
+  }
+
+  html { background: #e9e8e4; }
+  body {
+    font-family: "STIX Two Text", "Times New Roman", Times, serif;
+    font-size: 10pt;
+    line-height: 1.28;
+    color: var(--ink);
+    background: var(--paper);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 0.75in 0.6in 0.9in;
+    box-shadow: 0 0 0 1px #dcdbd6, 0 8px 32px rgba(0,0,0,0.06);
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+
+  /* ---------- Title block (single column, centered) ---------- */
+  header.title-block {
+    text-align: center;
+    margin-bottom: 22pt;
+  }
+  h1.paper-title {
+    font-size: 22pt;
+    font-weight: 500;
+    line-height: 1.15;
+    margin: 0 0 14pt 0;
+    letter-spacing: 0.005em;
+  }
+  .authors {
+    font-size: 11pt;
+    margin: 0 0 2pt 0;
+  }
+  .authors .name { font-weight: 500; }
+  .affiliation {
+    font-size: 10pt;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.35;
+  }
+  .affiliation .email {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-style: normal;
+    font-size: 8.5pt;
+  }
+
+  /* ---------- Two-column body ---------- */
+  main.body {
+    column-count: 2;
+    column-gap: 0.25in;
+    column-rule: none;
+    text-align: justify;
+  }
+
+  /* ---------- Abstract & Index Terms ---------- */
+  .abstract, .index-terms {
+    font-size: 9pt;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0 0 8pt 0;
+    text-indent: 0;
+  }
+  .abstract::before {
+    content: "Abstract—";
+    font-weight: 700;
+    font-style: normal;
+  }
+  .index-terms::before {
+    content: "Index Terms—";
+    font-weight: 700;
+    font-style: italic;
+  }
+  .index-terms { font-style: italic; }
+
+  /* ---------- Section headings ---------- */
+  h2 {
+    font-size: 10pt;
+    font-weight: 400;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 14pt 0 6pt 0;
+    font-variant: small-caps;
+    break-after: avoid-page;
+  }
+  h3 {
+    font-size: 10pt;
+    font-weight: 400;
+    font-style: italic;
+    margin: 10pt 0 4pt 0;
+    text-align: left;
+    break-after: avoid-page;
+  }
+
+  /* ---------- Paragraphs ---------- */
+  p {
+    margin: 0 0 0 0;
+    text-indent: 1.2em;
+  }
+  p.first, h2 + p, h3 + p, .abstract, .index-terms {
+    text-indent: 0;
+  }
+
+  /* ---------- Lists (kept restrained, IEEE-style) ---------- */
+  ul, ol {
+    margin: 4pt 0 4pt 0;
+    padding-left: 1.4em;
+  }
+  ul li, ol li {
+    margin-bottom: 2pt;
+    text-align: justify;
+  }
+
+  /* ---------- Links ---------- */
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:visited { color: var(--link-visited); }
+
+  /* ---------- Figures ---------- */
+  figure {
+    margin: 8pt 0 8pt 0;
+    break-inside: avoid;
+    text-align: center;
+  }
+  figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+  figcaption {
+    font-size: 8.5pt;
+    line-height: 1.3;
+    margin-top: 4pt;
+    text-align: left;
+    text-indent: 0;
+  }
+  figcaption .label {
+    font-weight: 500;
+  }
+
+  /* ---------- References ---------- */
+  ol.references {
+    list-style: none;
+    counter-reset: ref;
+    padding-left: 0;
+    font-size: 8.5pt;
+    line-height: 1.3;
+  }
+  ol.references li {
+    counter-increment: ref;
+    padding-left: 1.6em;
+    text-indent: -1.6em;
+    margin-bottom: 3pt;
+    text-align: justify;
+  }
+  ol.references li::before {
+    content: "[" counter(ref) "]\00a0";
+    font-weight: 400;
+  }
+
+  /* ---------- Inline reference citations ---------- */
+  cite.ref {
+    font-style: normal;
+  }
+
+  /* ---------- Publication list (looks like references but selected) ---------- */
+  ol.pubs {
+    list-style: none;
+    counter-reset: pub;
+    padding-left: 0;
+    font-size: 9pt;
+    line-height: 1.3;
+  }
+  ol.pubs li {
+    counter-increment: pub;
+    padding-left: 1.8em;
+    text-indent: -1.8em;
+    margin-bottom: 4pt;
+    text-align: justify;
+  }
+  ol.pubs li::before {
+    content: "[P" counter(pub) "]\00a0";
+    font-weight: 500;
+  }
+  .venue { font-style: italic; }
+
+  /* ---------- Small monospace bits ---------- */
+  code, .mono {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.88em;
+  }
+
+  /* ---------- News list ---------- */
+  dl.news {
+    margin: 4pt 0;
+    font-size: 9pt;
+  }
+  dl.news dt {
+    float: left;
+    clear: left;
+    width: 4.2em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  dl.news dd {
+    margin-left: 4.6em;
+    margin-bottom: 2pt;
+  }
+
+  /* ---------- Footer ---------- */
+  footer.colophon {
+    margin-top: 18pt;
+    padding-top: 8pt;
+    border-top: 0.5pt solid var(--rule);
+    font-size: 8pt;
+    color: var(--ink-soft);
+    text-align: center;
+    column-span: all;
+    font-style: italic;
+  }
+
+  /* ---------- Print ---------- */
+  @media print {
+    html { background: white; }
+    body {
+      box-shadow: none;
+      margin: 0;
+      padding: 0.75in 0.6in;
+      max-width: none;
+    }
+  }
+
+  /* ---------- Small screens: collapse to one column ---------- */
+  @media (max-width: 720px) {
+    body { padding: 0.5in 0.4in; font-size: 11pt; }
+    main.body { column-count: 1; }
+    h1.paper-title { font-size: 18pt; }
+  }
+</style>
+</head>
+<body>
+
+<header class="title-block">
+  <h1 class="paper-title">A Research Program at the Intersection of<br>Programming Languages, Systems, and Machine Learning</h1>
+  <p class="authors">
+    <span class="name">A. N. Researcher</span>, <span style="font-variant: small-caps; font-size: 0.85em;">Member, ACM</span>
+  </p>
+  <p class="affiliation">
+    Department of Computer Science<br>
+    University of Somewhere, City, Country<br>
+    <span class="email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9eecfbedfbffecfdf6fbecdeebf0f7e8fbecedf7eae7b0fbfaeb">[email&#160;protected]</a></span> &nbsp;·&nbsp;
+    <a href="#">homepage</a> &nbsp;·&nbsp;
+    <a href="#">Google&nbsp;Scholar</a> &nbsp;·&nbsp;
+    <a href="#">GitHub</a> &nbsp;·&nbsp;
+    <a href="#">CV&nbsp;(PDF)</a>
+  </p>
+</header>
+
+<main class="body">
+
+  <p class="abstract">I am a computer scientist and researcher working at the intersection of programming languages, distributed systems, and machine learning. My work develops formal abstractions and practical tools that make large-scale software both faster to build and easier to reason about. Recent projects include type systems for differentiable programs, latency-aware schedulers for heterogeneous accelerators, and verified compilers for tensor algebra. This page summarizes my research interests, selected publications, teaching, and ways to get in touch.</p>
+
+  <p class="index-terms">programming languages, type systems, distributed systems, machine learning compilers, verification, scheduling.</p>
+
+  <h2>I.&nbsp;&nbsp;Introduction</h2>
+
+  <p class="first">I am an Assistant Professor in the Department of Computer Science at the University of Somewhere, where I lead the Foundations and Systems Research Group. Before joining Somewhere in 2023, I completed my Ph.D. at Another University under the supervision of Prof. M. Advisor, and held a postdoctoral position at a Major Industry Research Lab.</p>
+
+  <p>My research asks a deceptively simple question: <em>how do we build software systems whose behavior we can predict, explain, and trust at scale?</em> I approach this question from three angles &mdash; language design, systems engineering, and empirical evaluation &mdash; and I believe progress requires moving fluidly among them.</p>
+
+  <figure>
+    <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" aria-label="Figure 1 placeholder">
+      <defs>
+        <pattern id="stripe1" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+          <rect width="8" height="8" fill="#f6f6f4"/>
+          <line x1="0" y1="0" x2="0" y2="8" stroke="#e4e3df" stroke-width="3"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="220" fill="url(#stripe1)"/>
+      <rect x="40" y="30" width="320" height="160" fill="none" stroke="#bdbcb6" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="200" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6a6a64">[ system architecture diagram ]</text>
+      <text x="200" y="126" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#9a9a94">drop a 400×220 figure here</text>
+    </svg>
+    <figcaption><span class="label">Fig. 1.</span> High-level architecture of the proposed framework. The compiler front-end (left) lowers a typed source language into an intermediate representation that the scheduler (center) maps onto heterogeneous backends (right).</figcaption>
+  </figure>
+
+  <p>This document is structured as follows. Section&nbsp;II describes my current research interests in more detail. Section&nbsp;III lists selected publications. Section&nbsp;IV summarizes teaching and student supervision. Section&nbsp;V provides contact information.</p>
+
+  <h2>II.&nbsp;&nbsp;Research Interests</h2>
+
+  <h3>A.&nbsp;&nbsp;Type systems for numerical programs</h3>
+
+  <p class="first">Modern numerical code &mdash; from physics simulations to neural networks &mdash; routinely loses meaningful structure at the type level. My work develops refinement and dependent type systems that recover invariants such as tensor shape, unit, and differentiability, and that can be checked with predictable performance <cite class="ref">[1]</cite>, <cite class="ref">[2]</cite>.</p>
+
+  <h3>B.&nbsp;&nbsp;Latency-aware scheduling</h3>
+
+  <p>Heterogeneous accelerators have made scheduling a first-class concern. I am interested in schedulers that expose tail-latency guarantees as a contract, and in compiler techniques that let high-level frameworks emit code that respects those contracts <cite class="ref">[3]</cite>.</p>
+
+  <h3>C.&nbsp;&nbsp;Verified machine-learning compilers</h3>
+
+  <p>A growing body of ML infrastructure is written without proof or even test of semantic correctness. With my students I am building a mechanized account of tensor algebra rewrites, with the goal of certifying optimizations used in production frameworks <cite class="ref">[4]</cite>.</p>
+
+  <figure>
+    <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" aria-label="Figure 2 placeholder">
+      <defs>
+        <pattern id="stripe2" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(-45)">
+          <rect width="6" height="6" fill="#f6f6f4"/>
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#e4e3df" stroke-width="2"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="200" fill="url(#stripe2)"/>
+      <!-- mock plot axes -->
+      <line x1="50" y1="170" x2="370" y2="170" stroke="#9a9a94" stroke-width="1"/>
+      <line x1="50" y1="170" x2="50"  y2="30"  stroke="#9a9a94" stroke-width="1"/>
+      <text x="210" y="190" text-anchor="middle" font-family="STIX Two Text, serif" font-size="9" fill="#6a6a64" font-style="italic">workload size</text>
+      <text x="22" y="100" text-anchor="middle" font-family="STIX Two Text, serif" font-size="9" fill="#6a6a64" font-style="italic" transform="rotate(-90 22 100)">latency (ms)</text>
+      <text x="210" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#9a9a94">[ benchmark plot ]</text>
+    </svg>
+    <figcaption><span class="label">Fig. 2.</span> Measured tail latency versus workload size for the proposed scheduler against two baselines. The vertical axis uses a logarithmic scale; error bars denote 95% confidence intervals over 50 trials.</figcaption>
+  </figure>
+
+  <h2>III.&nbsp;&nbsp;Selected Publications</h2>
+
+  <p class="first">A complete list is available on my <a href="#">Google Scholar profile</a>. Below are representative recent works; (*) denotes equal contribution and (†) denotes student authors I supervised.</p>
+
+  <ol class="pubs">
+    <li>A. N. Researcher and S. Tudent†, &ldquo;Refinement Types for Differentiable Programs,&rdquo; in <span class="venue">Proc. ACM Symp. Principles of Programming Languages (POPL)</span>, 2026, pp. 112&ndash;125.</li>
+    <li>P. Eer*, A. N. Researcher*, and J. Coauthor, &ldquo;Shape Inference Without Tears,&rdquo; in <span class="venue">Proc. Int. Conf. Functional Programming (ICFP)</span>, 2025.</li>
+    <li>A. N. Researcher, K. Tudent†, and L. Collaborator, &ldquo;Tail-Latency Contracts for Heterogeneous Accelerators,&rdquo; in <span class="venue">Proc. USENIX Symp. Operating Systems Design and Implementation (OSDI)</span>, 2025, pp. 401&ndash;418.</li>
+    <li>R. Tudent†, A. N. Researcher, &ldquo;A Mechanized Semantics for Tensor Rewrites,&rdquo; <span class="venue">Proc. ACM Programming Languages</span>, vol. 9, no. PLDI, 2025.</li>
+    <li>A. N. Researcher, &ldquo;On the Cost of Abstraction in Numerical Code,&rdquo; <span class="venue">Communications of the ACM</span>, vol. 67, no. 4, pp. 88&ndash;97, Apr. 2024.</li>
+  </ol>
+
+  <h2>IV.&nbsp;&nbsp;Teaching and Supervision</h2>
+
+  <p class="first">I teach undergraduate and graduate courses in the broad area of programming languages and systems.</p>
+
+  <ul>
+    <li><em>CS&nbsp;3210 &mdash; Programming Language Foundations</em> (undergraduate, Fall).</li>
+    <li><em>CS&nbsp;6240 &mdash; Advanced Compilers</em> (graduate, Spring).</li>
+    <li><em>CS&nbsp;7990 &mdash; Seminar: Verified Systems</em> (graduate, every other Fall).</li>
+  </ul>
+
+  <p>I am fortunate to advise a small group of Ph.D. and M.Sc. students. Prospective students should consult the <a href="#">group page</a> before contacting me; I read every application but cannot reply individually.</p>
+
+  <h2>V.&nbsp;&nbsp;News</h2>
+
+  <dl class="news">
+    <dt>2026.04</dt><dd>Paper accepted at POPL&nbsp;2026.</dd>
+    <dt>2026.02</dt><dd>Invited talk at the Workshop on Verified Compilation.</dd>
+    <dt>2025.10</dt><dd>NSF CAREER award announced.</dd>
+    <dt>2025.06</dt><dd>S. Tudent successfully defended their dissertation. Congratulations!</dd>
+  </dl>
+
+  <h2>VI.&nbsp;&nbsp;Contact</h2>
+
+  <p class="first">Email is the most reliable way to reach me. Office hours are by appointment during the academic year.</p>
+
+  <p>
+  <span class="mono"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bdcfd8ced8dccfded5d8cffdc8d3d4cbd8cfced4c9c493d8d9c8">[email&#160;protected]</a></span><br>
+  Office&nbsp;404, Computer Science Building<br>
+  University of Somewhere, City, Country
+  </p>
+
+  <h2>References</h2>
+
+  <ol class="references">
+    <li>B. C. Pierce, <em>Types and Programming Languages</em>. Cambridge, MA, USA: MIT Press, 2002.</li>
+    <li>A. M. Turing, &ldquo;On Computable Numbers, with an Application to the Entscheidungsproblem,&rdquo; <em>Proc. London Math. Soc.</em>, vol. s2-42, no. 1, pp. 230&ndash;265, 1937.</li>
+    <li>J. Dean and L. A. Barroso, &ldquo;The Tail at Scale,&rdquo; <em>Commun. ACM</em>, vol. 56, no. 2, pp. 74&ndash;80, Feb. 2013.</li>
+    <li>X. Leroy, &ldquo;Formal Verification of a Realistic Compiler,&rdquo; <em>Commun. ACM</em>, vol. 52, no. 7, pp. 107&ndash;115, Jul. 2009.</li>
+  </ol>
+
+  <footer class="colophon">
+    Last updated May 2026. Set in STIX Two Text. Hand-written HTML — feel free to view source.
+  </footer>
+
+</main>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
