@@ -251,7 +251,7 @@
     // image, then drawImage() it scaled up to fill the plot area. This makes
     // particles visible (each "pixel" covers ~scale CSS px) and avoids
     // per-particle box loops.
-    const RES_DIV = 3; // 1 small px == RES_DIV CSS px on screen
+    const RES_DIV = 1; // 1 small px == RES_DIV CSS px on screen
     const lowW = Math.max(1, (PW / RES_DIV) | 0);
     const lowH = Math.max(1, (PH / RES_DIV) | 0);
 
