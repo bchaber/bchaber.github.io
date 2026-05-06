@@ -247,24 +247,6 @@
     width: 100%;
     height: auto;
   }
-  .controls {
-    margin-top: 14px;
-    font-size: 8.5pt;
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    color: #333;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  button {
-    font-size: 8.5pt;
-    padding: 4px 10px;
-    border: 1px solid #bbb;
-    background: #fafafa;
-    cursor: pointer;
-  }
-  button:hover { background: #f0efe9; }
   /* ---------- Print ---------- */
   @media print {
     html { background: white; }
@@ -316,11 +298,9 @@
 
   <figure>
     <canvas id="fig-ts" width="400" height="300"></canvas>
-    <div class="controls">
-      <button id="reset">⏮</button>
-      <button id="pause">⏯</button>
-    </div>
-    <figcaption><span class="label">Figure</span> particles per stream: 4000 · grid: 64 · dt = 0.05.</figcaption>
+    <figcaption><span class="label">Figure</span> particles per stream: 4000 · grid: 64 · dt = 0.05.
+      (<a href="#" id="reset">⏮</a><a href="#" id="pause">⏯</a>)
+    </figcaption>
   </figure>
 
   <p>This document is structured as follows. Section&nbsp;II describes my current research interests in more detail. Section&nbsp;III lists selected publications. Section&nbsp;IV summarizes teaching and student supervision. Section&nbsp;V provides contact information.</p>
