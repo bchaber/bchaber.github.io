@@ -209,9 +209,9 @@
   // ---------- Rendering ----------
   function render(sim, ctx) {
     const { p, N, x, v, stream } = sim;
-    const W = ctx.canvas.clientWidth * 2;
-    const H = ctx.canvas.clientHeight * 2;
-    ctx.scale(2, 2);
+    const W = ctx.canvas.width;
+    const H = ctx.canvas.height;
+    
     // Plot area (margins for axes)
     const ML = 56, MR = 16, MT = 24, MB = 40;
     const PW = W - ML - MR;
@@ -345,10 +345,12 @@
 
   // ---------- Public API ----------
   function start(canvas, opts) {
+    canvas.width = canvas.clientWidth * 2;
+    canvas.height = canvas.clientHeight * 2;
     const ctx = canvas.getContext('2d');
     const sim = createSim(opts);
     let running = true;
-
+    ctx.scale(2, 2);
     function frame() {
       if (!running) return;
       // a few sub-steps per frame for smoother dynamics
