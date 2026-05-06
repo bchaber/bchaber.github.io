@@ -213,7 +213,7 @@
     const H = ctx.canvas.height;
     
     // Plot area (margins for axes)
-    const ML = 56 / 2, MR = 16 / 2, MT = 24 / 2, MB = 40 / 2;
+    const ML = 56, MR = 16, MT = 24, MB = 40;
     const PW = W - ML - MR;
     const PH = H - MT - MB;
 
