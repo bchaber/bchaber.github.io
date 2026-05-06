@@ -246,45 +246,60 @@
     ctx.moveTo(ML, yZero); ctx.lineTo(ML + PW, yZero);
     ctx.stroke();
 
-    // --- Particle scatter ---
-    // Use ImageData for speed when N is large.
-    // ImageData operates in DEVICE pixels (ignores ctx transforms),
-    // so we allocate it at PW*DPR × PH*DPR and put it without transform.
-    const DPR = ctx.canvas.width / (ctx.canvas._logicalW || ctx.canvas.width);
-    const dPW = (PW * DPR) | 0;
-    const dPH = (PH * DPR) | 0;
-    const img = ctx.getImageData(ML * DPR, MT * DPR, dPW, dPH);
-    const data = img.data;
+    // --- Particle scatter on a REDUCED-resolution buffer ---
+    // We rasterize each particle as a single pixel into a small offscreen
+    // image, then drawImage() it scaled up to fill the plot area. This makes
+    // particles visible (each "pixel" covers ~scale CSS px) and avoids
+    // per-particle box loops.
+    const RES_DIV = 3; // 1 small px == RES_DIV CSS px on screen
+    const lowW = Math.max(1, (PW / RES_DIV) | 0);
+    const lowH = Math.max(1, (PH / RES_DIV) | 0);
+
+    // Reuse the offscreen canvas across frames
+    if (!render._off || render._off.width !== lowW || render._off.height !== lowH) {
+      const off = document.createElement('canvas');
+      off.width  = lowW;
+      off.height = lowH;
+      render._off = off;
+      render._offCtx = off.getContext('2d');
+      render._offImg = render._offCtx.createImageData(lowW, lowH);
+    }
+    const offCtx = render._offCtx;
+    const img    = render._offImg;
+    const data   = img.data;
+    // Clear to plot bg (#fbfaf7)
+    for (let k = 0; k < data.length; k += 4) {
+      data[k]   = 0xfb; data[k+1] = 0xfa; data[k+2] = 0xf7; data[k+3] = 0xff;
+    }
 
     const cA = hexToRgb(p.colorA);
     const cB = hexToRgb(p.colorB);
 
-    const sxScale = dPW / p.L;
-    const syScale = dPH / (2 * p.vRange);
-    const yMid = dPH / 2;
-
-    function plot(px, py, c) {
-      if (px < 0 || px >= dPW || py < 0 || py >= dPH) return;
-      const idx = (py * dPW + px) * 4;
-      data[idx + 0] = (data[idx + 0] * 0.2 + c.r * 0.8) | 0;
-      data[idx + 1] = (data[idx + 1] * 0.2 + c.g * 0.8) | 0;
-      data[idx + 2] = (data[idx + 2] * 0.2 + c.b * 0.8) | 0;
-      data[idx + 3] = 255;
-    }
+    const sxScale = lowW / p.L;
+    const syScale = lowH / (2 * p.vRange);
+    const yMid = lowH / 2;
 
     for (let i = 0; i < N; i++) {
       const px = (x[i] * sxScale) | 0;
-      // Clamp v for display
       let vy = v[i];
       if (vy >  p.vRange) vy =  p.vRange;
       if (vy < -p.vRange) vy = -p.vRange;
-      // y axis: +v up
       const py = (yMid - vy * syScale) | 0;
+      if (px < 0 || px >= lowW || py < 0 || py >= lowH) continue;
       const c = stream[i] === 0 ? cA : cB;
-      plot(px, py, c);
+      const idx = (py * lowW + px) * 4;
+      // alpha-ish blend so overlaps darken
+      data[idx]     = (data[idx]     * 0.3 + c.r * 0.7) | 0;
+      data[idx + 1] = (data[idx + 1] * 0.3 + c.g * 0.7) | 0;
+      data[idx + 2] = (data[idx + 2] * 0.3 + c.b * 0.7) | 0;
+      data[idx + 3] = 255;
     }
-    // putImageData ignores transform — use device-pixel coords
-    ctx.putImageData(img, ML * DPR, MT * DPR);
+    offCtx.putImageData(img, 0, 0);
+
+    // Scale the low-res buffer up onto the main canvas (smoothed off → crisp blocks)
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(render._off, 0, 0, lowW, lowH, ML, MT, PW, PH);
+    ctx.imageSmoothingEnabled = true;
 
     // Axes frame
     ctx.strokeStyle = DEFAULTS.axis;
@@ -303,9 +318,12 @@
     }
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    // Use CSS-pixel scale for labels (yMid/syScale above are in device px for ImageData)
+    const yMidCss = MT + PH / 2;
+    const syScaleCss = PH / (2 * p.vRange);
     for (let j = -2; j <= 2; j++) {
       const vv = (p.vRange * j) / 2;
-      const py = yMid + MT - vv * syScale;
+      const py = yMidCss - vv * syScaleCss;
       ctx.fillText(vv.toFixed(1), ML - 6, py);
     }
 
@@ -360,28 +378,35 @@
     canvas.height = cssH * DPR;
     const ctx = canvas.getContext('2d');
     ctx.scale(DPR, DPR);
+    // Render functions read ctx.canvas.width/height — give them the CSS size
+    // by exposing a logical-size shim.
     Object.defineProperty(ctx.canvas, '_logicalW', { value: cssW });
     Object.defineProperty(ctx.canvas, '_logicalH', { value: cssH });
 
     const sim = createSim(opts);
-    let running = true;
+    let running = (opts && opts.autoStart !== false);
 
     function frame() {
       if (!running) return;
+      // a few sub-steps per frame for smoother dynamics
       const subSteps = 1;
       for (let s = 0; s < subSteps; s++) step(sim);
       render(sim, ctx);
       requestAnimationFrame(frame);
     }
-    requestAnimationFrame(frame);
+    // Always render the initial state once so the canvas isn't blank when paused
+    render(sim, ctx);
+    if (running) requestAnimationFrame(frame);
 
     return {
       sim,
+      isRunning: () => running,
       stop:   () => { running = false; },
       resume: () => { if (!running) { running = true; requestAnimationFrame(frame); } },
       reset:  (newOpts) => {
         const next = createSim(Object.assign({}, sim.p, newOpts || {}));
         Object.assign(sim, next);
+        render(sim, ctx);
       },
     };
   }
