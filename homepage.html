@@ -293,18 +293,12 @@
   <p>My research asks a deceptively simple question: <em>how do we build software systems whose behavior we can predict, explain, and trust at scale?</em> I approach this question from three angles &mdash; language design, systems engineering, and empirical evaluation &mdash; and I believe progress requires moving fluidly among them.</p>
 
   <figure>
-    <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" aria-label="Figure 1 placeholder">
-      <defs>
-        <pattern id="stripe1" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
-          <rect width="8" height="8" fill="#f6f6f4"/>
-          <line x1="0" y1="0" x2="0" y2="8" stroke="#e4e3df" stroke-width="3"/>
-        </pattern>
-      </defs>
-      <rect width="400" height="220" fill="url(#stripe1)"/>
-      <rect x="40" y="30" width="320" height="160" fill="none" stroke="#bdbcb6" stroke-width="1" stroke-dasharray="3 3"/>
-      <text x="200" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6a6a64">[ system architecture diagram ]</text>
-      <text x="200" y="126" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#9a9a94">drop a 400×220 figure here</text>
-    </svg>
+    <canvas id="fig-ts" width="500" height="200"></canvas>
+    <div class="controls">
+      <button id="reset">restart</button>
+      <button id="pause">pause / resume</button>
+      <span>particles per stream: 4000 · grid: 64 · dt = 0.05</span>
+    </div>
     <figcaption><span class="label">Figure</span> High-level architecture of the proposed framework. The compiler front-end (left) lowers a typed source language into an intermediate representation that the scheduler (center) maps onto heterogeneous backends (right).</figcaption>
   </figure>
 
@@ -401,5 +395,16 @@
 
 </main>
 
+<script src="twostream.js"></script>
+<script>
+  const canvas = document.getElementById('fig-ts');
+  const handle = TwoStream.start(canvas);
+  let paused = false;
+  document.getElementById('reset').onclick = () => handle.reset();
+  document.getElementById('pause').onclick = () => {
+    if (paused) { handle.resume(); paused = false; }
+    else        { handle.stop();   paused = true;  }
+  };
+</script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
 </html>
