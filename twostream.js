@@ -334,8 +334,8 @@
     ctx.fillStyle = DEFAULTS.text;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('stream A  (+v₀)', lx + 16, ly + 5);
-    ctx.fillText('stream B  (−v₀)', lx + 16, ly + 21);
+    ctx.fillText('+v₀', lx + 16, ly + 5);
+    ctx.fillText('−v₀', lx + 16, ly + 21);
   }
 
   function hexToRgb(h) {
@@ -358,7 +358,7 @@
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-
+    ctx.scale(2.0);
     return {
       sim,
       stop:   () => { running = false; },
