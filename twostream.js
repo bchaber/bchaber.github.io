@@ -266,10 +266,9 @@
     function plot(px, py, c) {
       if (px < 0 || px >= dPW || py < 0 || py >= dPH) return;
       const idx = (py * dPW + px) * 4;
-      // Additive-ish blend so overlaps darken nicely
-      data[idx]     = (data[idx]     * 0.3 + c.r * 0.7) | 0;
-      data[idx + 1] = (data[idx + 1] * 0.3 + c.g * 0.7) | 0;
-      data[idx + 2] = (data[idx + 2] * 0.3 + c.b * 0.7) | 0;
+      data[idx + 0] = (data[idx + 0] * 0.2 + c.r * 0.8) | 0;
+      data[idx + 1] = (data[idx + 1] * 0.2 + c.g * 0.8) | 0;
+      data[idx + 2] = (data[idx + 2] * 0.2 + c.b * 0.8) | 0;
       data[idx + 3] = 255;
     }
 
@@ -340,8 +339,8 @@
     ctx.fillStyle = DEFAULTS.text;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('stream A  (+v₀)', lx + 16, ly + 5);
-    ctx.fillText('stream B  (−v₀)', lx + 16, ly + 21);
+    ctx.fillText('+v₀', lx + 16, ly + 5);
+    ctx.fillText('−v₀', lx + 16, ly + 21);
   }
 
   function hexToRgb(h) {
@@ -361,8 +360,6 @@
     canvas.height = cssH * DPR;
     const ctx = canvas.getContext('2d');
     ctx.scale(DPR, DPR);
-    // Render functions read ctx.canvas.width/height — give them the CSS size
-    // by exposing a logical-size shim.
     Object.defineProperty(ctx.canvas, '_logicalW', { value: cssW });
     Object.defineProperty(ctx.canvas, '_logicalH', { value: cssH });
 
@@ -371,7 +368,6 @@
 
     function frame() {
       if (!running) return;
-      // a few sub-steps per frame for smoother dynamics
       const subSteps = 1;
       for (let s = 0; s < subSteps; s++) step(sim);
       render(sim, ctx);
