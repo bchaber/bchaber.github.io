@@ -243,6 +243,32 @@
     font-style: italic;
   }
 
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fefefe;
+    border: 1px solid #dcdbd6;
+  }
+  .controls {
+    margin-top: 14px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10pt;
+    color: #333;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    padding: 4px 10px;
+    border: 1px solid #bbb;
+    background: #fafafa;
+    cursor: pointer;
+  }
+  button:hover { background: #f0efe9; }
   /* ---------- Print ---------- */
   @media print {
     html { background: white; }
@@ -293,7 +319,7 @@
   <p>My research asks a deceptively simple question: <em>how do we build software systems whose behavior we can predict, explain, and trust at scale?</em> I approach this question from three angles &mdash; language design, systems engineering, and empirical evaluation &mdash; and I believe progress requires moving fluidly among them.</p>
 
   <figure>
-    <canvas id="fig-ts" width="500" height="200"></canvas>
+    <canvas id="fig-ts" width="400" height="200"></canvas>
     <div class="controls">
       <button id="reset">restart</button>
       <button id="pause">pause / resume</button>
