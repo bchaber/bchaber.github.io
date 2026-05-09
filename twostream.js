@@ -251,7 +251,7 @@
     // image, then drawImage() it scaled up to fill the plot area. This makes
     // particles visible (each "pixel" covers ~scale CSS px) and avoids
     // per-particle box loops.
-    const RES_DIV = 1; // 1 small px == RES_DIV CSS px on screen
+    const RES_DIV = 2; // 1 small px == RES_DIV CSS px on screen
     const lowW = Math.max(1, (PW / RES_DIV) | 0);
     const lowH = Math.max(1, (PH / RES_DIV) | 0);
 
@@ -378,8 +378,6 @@
     canvas.height = cssH * DPR;
     const ctx = canvas.getContext('2d');
     ctx.scale(DPR, DPR);
-    // Render functions read ctx.canvas.width/height — give them the CSS size
-    // by exposing a logical-size shim.
     Object.defineProperty(ctx.canvas, '_logicalW', { value: cssW });
     Object.defineProperty(ctx.canvas, '_logicalH', { value: cssH });
 
@@ -394,9 +392,9 @@
       render(sim, ctx);
       requestAnimationFrame(frame);
     }
-    // Always render the initial state once so the canvas isn't blank when paused
+
     render(sim, ctx);
-    if (running) requestAnimationFrame(frame);
+    requestAnimationFrame(frame);
 
     return {
       sim,
