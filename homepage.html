@@ -507,7 +507,7 @@ I read every application but cannot reply individually.</p>
 
       function init() {
 
-        camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+        camera = new THREE.PerspectiveCamera( 50, 4/3, 0.1, 100 );
         camera.position.set( 0.5, 1, 2 );
         scene = new THREE.Scene();
         scene.background = new THREE.Color( 0xffffff );
@@ -589,7 +589,7 @@ I read every application but cannot reply individually.</p>
         depthMaterial.userData.darkness = { value: state.shadow.darkness };
         depthMaterial.onBeforeCompile = function ( shader ) {
           shader.uniforms.darkness = depthMaterial.userData.darkness;
-          shader.fragmentShader = /* glsl */`
+          shader.fragmentShader = `
             uniform float darkness;
             ${shader.fragmentShader.replace(
           'gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );',
