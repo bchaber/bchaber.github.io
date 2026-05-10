@@ -11,7 +11,7 @@ fig3.addEventListener("pointermove", (e) => {
   const dx = lastMouseX - e.clientX;
   lastMouseX = e.clientX;
   turntableAngle += dx * DRAG_SENSITIVITY;
-  angularVelocity = Math.sign(dx) * DRAG_SENSITIVITY;
+  angularVelocity = dx * DRAG_SENSITIVITY;
 });
 
 fig3.addEventListener("pointerup", (e) => {

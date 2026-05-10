@@ -5,7 +5,7 @@ let isDragging = false;
 let angularVelocity = 0;
 let lastMouseX = 0;
 
-const FRICTION = 0.99;
+const FRICTION = 0.7;
 const DRAG_SENSITIVITY = 0.01;
 
 function mat4_ortho_simple(proj_w, proj_h, z_scale) {
