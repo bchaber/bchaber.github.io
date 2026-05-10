@@ -249,6 +249,7 @@
     display: block;
     width: 100%;
     height: auto;
+		touch-action: none;
   }
   /* ---------- Print ---------- */
   @media print {
@@ -440,7 +441,7 @@ I read every application but cannot reply individually.</p>
 
 <script src="twostream.js"></script>
 <script src="tline.js"></script>
-<script src="ball.js"></script>
+<script src="helmet.js"></script>
 <script>
   const ts = TwoStream.start(fig1);
   const tl = TLine.start(fig2, { autoStart: false, termination: "short" });
