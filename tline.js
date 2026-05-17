@@ -45,8 +45,8 @@
     vRange:  1.2,            // y-axis half-range for V
     colorV:  '#1a4fa3',
     colorI:  '#b8341a',
-    bg:      '#fefefe',
-    plotBg:  '#fbfaf7',
+    bg:      '#ffffff',
+    plotBg:  '#ffffff',
     axis:    '#888',
     grid:    '#eee',
     text:    '#333',

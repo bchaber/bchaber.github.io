@@ -269,7 +269,7 @@
     const data   = img.data;
     // Clear to plot bg (#fbfaf7)
     for (let k = 0; k < data.length; k += 4) {
-      data[k]   = 0xfb; data[k+1] = 0xfa; data[k+2] = 0xf7; data[k+3] = 0xff;
+      data[k]   = 0xff; data[k+1] = 0xff; data[k+2] = 0xff; data[k+3] = 0xff;
     }
 
     const cA = hexToRgb(p.colorA);

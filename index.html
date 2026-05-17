@@ -1,41 +1,148 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bartosz Chaber</title>
-    <meta name="description" content="An avid coffee-drinker by day, a computer scientist by night">
-    <meta name="robots" content="index, follow">
-    <link rel="stylesheet" href="splendor.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bartosz Chaber — Homepage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/ieee.css">
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h3>Bartosz Chaber</h3>
-  <p>I am a postdoc at Warsaw University of Technology (Poland).
-  My main area of expertise is writing fast numerical codes for plasma simulations using
-  FDTD, FEM and PIC methods.</p>
-  <p>Most of my code is published either
-  at my <a href="https://github.com/bchaber">personal profile</a>
-  or as <a href="https://github.com/pleecs">PLE²CS group</a>.</p>
-  <p>In my free time I pretend to be a photographer.</p>
 
-  <h3>Most significant publications</h3>
-  <ol>
-  <li>B. Chaber and W. Łodyga,
-     “A Realistic Spark-Gap Model in Computer Simulation of Blumlein Transmission Line,”
-      Energies, vol. 15, no. 11. MDPI AG, p. 3919, May 26, 2022.
-      doi: 10.3390/en15113919</li>
-  <li>B. Chaber,
-     “Particle-in-Cell code for gas discharge simulations,”
-      2020 IEEE 21st International Conference on Computational Problems of Electrical Engineering (CPEE). IEEE, Sep. 2020.
-      doi: 10.1109/cpee50798.2020.9238682</li>
-  <li>W. Lodyga and B. Chaber,
-     “Parallel implementation of a Particle-in-Cell code in Julia programming language,”
-      2021 22nd International Conference on Computational Problems of Electrical Engineering (CPEE). IEEE, Sep. 15, 2021.
-      doi: 10.1109/cpee54040.2021.9585274</li>
-  <li>B. Chaber,
-     “Cell-centered, geometric multigrid field solver for Particle-in-Cell simulations,”
-      2021 22nd International Conference on Computational Problems of Electrical Engineering (CPEE). IEEE, Sep. 15, 2021.
-      doi: 10.1109/cpee54040.2021.9585258</li>
+<header>
+  <h1>Computational Electromagnetism <br/> and Particle Simulations</h1>
+  <span class="authors">
+    <img src="/orcid.svg" height=16px style="padding: 2px 0px; baseline-shift: bottom"></img>
+    Bartosz Chaber
+    <a href="#">[email]</a>
+  </span>
+  <p class="affiliation">
+    Faculty of Electrical Engineering<br>
+    Warsaw University of Technology<br>
+  </p>
+  <p class="contact">
+    <span class="place">Warsaw, Poland</span>
+  </p>
+</header>
+
+<main>
+
+  <p class="abstract">I am a researcher working at on computational physics ranging from: electromagnetic wave propagation to plasma simulations. My work requires writing fast and accurate computer solvers that can fit measurements of real world devices.</p>
+
+  <p class="index-terms">computational electromagnetics, particle-in-cell, finite element method, automatic differentiation.</p>
+
+  <h2>I.&nbsp;&nbsp;Computational Electromagnetics</h2>
+
+  <p>I am an Assistant Professor in the Faculty of Electrical Engineering of Warsaw University of Technology. My PhD thesis (2017) was dedicated to a Finite Element Method solver that helped designing a better transission line for EMC susceptibility test. A simple demonstration of a pule propagation in a shorted transmission line is presented in Fig. 1</p>
+
+  <figure>
+    <canvas id="fig1" width="400" height="300"></canvas>
+    <figcaption><span class="label">Figure 1</span>
+      particles per stream: 4000 · grid: 64 · dt = 0.05.
+    </figcaption>
+  </figure>
+  </p>
+
+  <h2>II.&nbsp;&nbsp;Plasma Simulations</h2>
+
+  <p>Since then, I have focused on plasma simulations, using Particle-in-Cell (PIC) method. Our group develops a fast PIC code coupled with a Monte Carlo method for the modeling of collision processes in the plasma. An interactive simulation of classical problem of Two Stream Instability is presented in Fig. 2.</p>
+
+
+  <figure>
+    <canvas id="fig2" width="400" height="200"></canvas>
+    <figcaption><span class="label">Figure</span> Measured tail latency versus workload size for the proposed scheduler against two baselines. The vertical axis uses a logarithmic scale; error bars denote 95% confidence intervals over 50 trials.</figcaption>
+  </figure>
+
+  <h2>III.&nbsp;&nbsp;Differential Programming</h2>
+
+  <p>Ever since I started teaching it, I got fascinated with Differential Programming. In recent years, I have developed a few libraries for different types of automatic differentiation. Ultimately, such libraries might help build better Digital Twins of real world systems/devices.
+  </p>
+
+  <figure>
+    <canvas id="fig3" width="400" height="300" style="border: 1px solid black"></canvas>
+    <figcaption><span class="label">Figure</span>
+      particles per stream: 4000 · grid: 64 · dt = 0.05.
+    </figcaption>
+  </figure>
+
+  <h2>IV.&nbsp;&nbsp;Teaching and Supervision</h2>
+
+  <p>I teach undergraduate and graduate courses in the broad area of programming languages and systems.</p>
+
+  <ul>
+    <li><em>DI3210 &mdash; Algorithms in Data Science</em> (graduate, Spring).</li>
+    <li><em>DI6240 &mdash; Data Security in IT Systems</em> (undergraduate, Fall).</li>
+  </ul>
+
+  <h2>V.&nbsp;&nbsp;Contact</h2>
+
+  <p>Email is the most reliable way to reach me. Office hours are by appointment during the academic year.</p>
+
+  <p class="address">Room&nbsp;223, Electrical Engineering Building<br>
+  Koszykowa 75, 00-662 Warsaw, Poland<br>
+  Warsaw University of Technology</p>
+
+  <h2>References</h2>
+
+  <ol class="references">
+    <li>Chaber B., Łodyga W., Starzyński J., &ldquo;A Computer Model of a Marx Generator Charging a Coaxial Switched Wave Oscillator,&rdquo; in <span class="venue">Energies</span>, vol. 17, no. 18, 2024, DOI: 10.3390/en17184644.</li>
+    <li>Chaber B., Łodyga W., Lachowiecka A., Kowalski M., Guba P., &ldquo;Electrostatic and Electromagnetic Particle-in-Cell Solvers for Electron Beam Device Simulations,&rdquo; in <span class="venue">Computing in Science & Engineering</span>, vol. 27, no. 3, 2025, DOI: .</li>
+    <li>Chaber P., Chaber B., &ldquo;Robustness Analysis of a Fast Virtual Temperature Sensor Using a Recurent Neural Network Model Sensitivity,&rdquo; in <span class="venue">Sensors</span>, vol. 25, no. 23, 2025, DOI: 10.1109/MCSE.2025.3597391.</li>
+    <li>Chaber B., Łodyga W., &ldquo;A Realistic Spark_Gpa Model in Computer Simulation of Blumlein Transmission Line,&rdquo; in <span class="venue">Energies</span>, vol. 15, no. 11, 2022, DOI: 10.3390/en15113919.</li>
   </ol>
-</body>
+
+  <footer class="colophon">
+    Last updated May 2026. Set in STIX Two Text.
+  </footer>
+</main>
+
+<script src="twostream.js"></script>
+<script src="tline.js"></script>
+<script src="helmet.js"></script>
+<script>
+  const ts = TwoStream.start(fig1);
+  const tl = TLine.start(fig2, { autoStart: false, termination: "short" });
+  fig1.onclick = () => {
+    if (ts.isRunning()) {
+      ts.stop();
+    } else {
+      ts.resume();
+    }
+  }
+
+  fig2.onclick = () => {
+    if (tl.isRunning()) {
+      tl.stop();
+    } else {
+      tl.resume();
+    }
+  }
+
+  const gl = fig3.getContext("webgl2", {
+    antialias: true, alpha: false, premultipliedAlpha: false,
+  });
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = fig3.clientWidth, ch = fig3.clientHeight;
+    const pw = Math.max(1, Math.round(cw * dpr));
+    const ph = Math.max(1, Math.round(ch * dpr));
+    if (fig3.width !== pw || fig3.height !== ph) {
+      fig3.width = pw; fig3.height = ph;
+    }
+    vp_w = pw; vp_h = ph;
+    gl.viewport(0, 0, pw, ph);
+  }
+  window.addEventListener("resize", resize);
+
+  if (!gl) {
+    fig3.innerHTML =
+      '<p style="padding:32px;font-family:serif;color:#5e5036">WebGL 2 unavailable.</p>';
+    throw new Error("WebGL 2 not supported");
+  }
+</script>
+<script src="webgl.js"></script>
+<script src="turntable.js"></script>
 </html>
