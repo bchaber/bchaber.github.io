@@ -40,7 +40,6 @@
   <figure>
     <canvas id="fig1" width="400" height="300"></canvas>
     <figcaption><span class="label">Figure 1</span>
-      particles per stream: 4000 · grid: 64 · dt = 0.05.
     </figcaption>
   </figure>
   </p>
@@ -52,7 +51,9 @@
 
   <figure>
     <canvas id="fig2" width="400" height="200"></canvas>
-    <figcaption><span class="label">Figure</span> Measured tail latency versus workload size for the proposed scheduler against two baselines. The vertical axis uses a logarithmic scale; error bars denote 95% confidence intervals over 50 trials.</figcaption>
+    <figcaption><span class="label">Figure 2</span>
+      particles per stream: 4000 · grid: 64 · dt = 0.05.
+    </figcaption>
   </figure>
 
   <h2>III.&nbsp;&nbsp;Differential Programming</h2>
@@ -62,8 +63,7 @@
 
   <figure>
     <canvas id="fig3" width="400" height="300" style="border: 1px solid black"></canvas>
-    <figcaption><span class="label">Figure</span>
-      particles per stream: 4000 · grid: 64 · dt = 0.05.
+    <figcaption><span class="label">Figure 3</span>
     </figcaption>
   </figure>
 
@@ -102,21 +102,21 @@
 <script src="tline.js"></script>
 <script src="helmet.js"></script>
 <script>
-  const ts = TwoStream.start(fig1);
-  const tl = TLine.start(fig2, { autoStart: false, termination: "short" });
+  const tl = TLine.start(fig1, { autoStart: false, termination: "short" });
+  const ts = TwoStream.start(fig2);
   fig1.onclick = () => {
-    if (ts.isRunning()) {
-      ts.stop();
-    } else {
-      ts.resume();
-    }
-  }
-
-  fig2.onclick = () => {
     if (tl.isRunning()) {
       tl.stop();
     } else {
       tl.resume();
+    }
+  }
+
+  fig2.onclick = () => {
+    if (ts.isRunning()) {
+      ts.stop();
+    } else {
+      ts.resume();
     }
   }
 
