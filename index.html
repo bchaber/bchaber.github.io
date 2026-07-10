@@ -16,7 +16,7 @@
   <span class="authors">
     <img src="/orcid.svg" height=16px style="padding: 2px 0px; baseline-shift: bottom"></img>
     Bartosz Chaber
-    <a href="#">[email]</a>
+    <a href="#">[bartosz.chaber@pw.edu.pl]</a>
   </span>
   <p class="affiliation">
     Faculty of Electrical Engineering<br>
@@ -65,6 +65,7 @@
   <figure>
     <canvas id="fig3" width="400" height="300" style="border: 1px solid black"></canvas>
     <figcaption><span class="label">Figure 3</span>
+      A simple 3D shape.
     </figcaption>
   </figure>
 
@@ -99,9 +100,19 @@
   </footer>
 </main>
 
+<script src="builder.js"></script>
 <script src="twostream.js"></script>
 <script src="tline.js"></script>
-<script src="helmet.js"></script>
+<script>
+const _builder = new ShapeBuilder();
+_builder.addBox({    size: [1.70, 0.35, 1.70], translate: [0,0,0] });
+_builder.addWedge({  size: [1.50, 0.60, 1.00], translate: [0,0.57,0] });
+const _mesh = _builder.build({ creaseAngleDeg: 40, overrides: [] });
+const SURF_VERTS   = _mesh.surfVerts;
+const SURF_INDICES = _mesh.surfIndices;
+const LINE_VERTS   = _mesh.lineVerts;
+const LINE_INDICES = _mesh.lineIndices;
+</script>
 <script>
   const tl = TLine.start(fig1, { autoStart: false, termination: "short" });
   const ts = TwoStream.start(fig2);

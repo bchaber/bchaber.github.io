@@ -230,10 +230,6 @@ gl.vertexAttribPointer(ATTR.v_normal,   3, gl.FLOAT, false, 24, 12);
 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 gl.bindVertexArray(null);
 
-// =============================================================================
-//  draw_mesh — same as v3
-// =============================================================================
-
 let vp_w = 1, vp_h = 1, dpr = 1;
 
 function draw_mesh(name, mvp, rotation, color, opacity, backface, cross_section, skip_line) {
