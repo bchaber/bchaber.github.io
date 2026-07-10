@@ -105,8 +105,10 @@
 <script src="tline.js"></script>
 <script>
 const _builder = new ShapeBuilder();
-_builder.addBox({    size: [1.70, 0.35, 1.70], translate: [0,0,0] });
-_builder.addWedge({  size: [1.50, 0.60, 1.00], translate: [0,0.57,0] });
+_builder.addBox({    size: [1.7, 0.35, 1.7],  translate: [0, -0.55, 0] });
+// _builder.addWedge({  size: [1.05, 0.6, 1.05], translate: [0, 0.0, 0],
+//                      rotate: [0, Math.PI / 7, 0] });
+_builder.addCylinder({ radiusTop: 0.15, radiusBottom: 0.5, height: 0.8 })
 const _mesh = _builder.build({ creaseAngleDeg: 40, overrides: [] });
 const SURF_VERTS   = _mesh.surfVerts;
 const SURF_INDICES = _mesh.surfIndices;

@@ -17,8 +17,6 @@ function sb_norm(a) {
   return l > 1e-12 ? sb_scale(a, 1 / l) : [0, 0, 0];
 }
 
-// Builds a point-transform closure from {scale, rotate:[rx,ry,rz], translate}.
-// Application order: scale -> rotX -> rotY -> rotZ -> translate.
 function sb_xform(opts) {
   const t = (opts && opts.translate) || [0, 0, 0];
   const r = (opts && opts.rotate)    || [0, 0, 0];
@@ -43,10 +41,10 @@ function sb_xform(opts) {
 
 class ShapeBuilder {
   constructor() {
-    this.tris = [];
+    this.tris = [];   // flat: 9 floats per triangle (3 positions)
   }
 
-  static edgeKey(a, b, eps) {
+   static edgeKey(a, b, eps) {
     eps = eps || 1e-3;
     const q = (p) => Math.round(p[0]/eps) + "," +
                      Math.round(p[1]/eps) + "," +
@@ -120,10 +118,11 @@ class ShapeBuilder {
     const stride = segments + 1;
     for (let lat = 0; lat < rings; lat++) {
       for (let seg = 0; seg < segments; seg++) {
-        const a  = lat * stride + seg;
-        const b  = a + stride;
+        const a  = lat * stride + seg;       // this ring
+        const b  = a + stride;               // next ring down
         const c  = b + 1;
         const dd = a + 1;
+        // Degenerate pole triangles are dropped automatically in build().
         I.push(a, c, b);
         I.push(a, dd, c);
       }
@@ -131,6 +130,38 @@ class ShapeBuilder {
     return this.addTriangles(P, I, opts);
   }
 
+  addCylinder(opts) {
+    opts = opts || {};
+    const r        = opts.radius !== undefined ? opts.radius : 0.5;
+    const rt       = opts.radiusTop    !== undefined ? opts.radiusTop    : r;
+    const rb       = opts.radiusBottom !== undefined ? opts.radiusBottom : r;
+    const h        = (opts.height   || 1) / 2;
+    const segments = opts.segments || 32;
+
+    const P = [];
+    for (let i = 0; i < segments; i++) {           // 0..seg-1: top ring
+      const phi = (i / segments) * 2 * Math.PI;
+      P.push([rt * Math.cos(phi), h, rt * Math.sin(phi)]);
+    }
+    for (let i = 0; i < segments; i++) {           // seg..2seg-1: bottom ring
+      const phi = (i / segments) * 2 * Math.PI;
+      P.push([rb * Math.cos(phi), -h, rb * Math.sin(phi)]);
+    }
+    const ct = P.length; P.push([0,  h, 0]);       // top-cap center
+    const cb = P.length; P.push([0, -h, 0]);       // bottom-cap center
+
+    const I = [];
+    for (let i = 0; i < segments; i++) {
+      const j = (i + 1) % segments;
+      const a = i, d = j;                          // top ring
+      const b = segments + i, c = segments + j;    // bottom ring
+      I.push(a, c, b,  a, d, c);                   // side wall (outward)
+      I.push(ct, d, a);                            // top cap    (+y)
+      I.push(cb, b, c);                            // bottom cap (-y)
+    }
+    // Zero-radius rings produce degenerate triangles, dropped in build().
+    return this.addTriangles(P, I, opts);
+  }
   build(opts) {
     opts = opts || {};
     const creaseDeg = opts.creaseAngleDeg !== undefined ? opts.creaseAngleDeg : 40;
@@ -268,11 +299,11 @@ class ShapeBuilder {
     for (const e of hardEdges) {
       const base = lineVerts.length / 6;
       const p0 = positions[e.a], p1 = positions[e.b];
-      const n  = e.normal, n2 = sb_scale(e.normal, 2);
-      lineVerts.push(p0[0], p0[1], p0[2],  n[0],  n[1],  n[2]);
-      lineVerts.push(p0[0], p0[1], p0[2], n2[0], n2[1], n2[2]);
-      lineVerts.push(p1[0], p1[1], p1[2],  n[0],  n[1],  n[2]);
-      lineVerts.push(p1[0], p1[1], p1[2], n2[0], n2[1], n2[2]);
+      const d  = sb_norm(sb_sub(p1, p0));
+      lineVerts.push(p0[0], p0[1], p0[2], -2*d[0], -2*d[1], -2*d[2]);
+      lineVerts.push(p0[0], p0[1], p0[2],   -d[0],   -d[1],   -d[2]);
+      lineVerts.push(p1[0], p1[1], p1[2],    d[0],    d[1],    d[2]);
+      lineVerts.push(p1[0], p1[1], p1[2],  2*d[0],  2*d[1],  2*d[2]);
       lineIndices.push(base+0, base+1, base+2,  base+2, base+1, base+3,
                        base+0, base+2, base+1,  base+2, base+3, base+1);
     }

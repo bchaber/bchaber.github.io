@@ -142,28 +142,38 @@ const CROSS_FS = `#version 300 es
 
 const LINE_VS = `#version 300 es
   in vec3 v_position;
-  in vec3 v_normal;
+  in vec3 v_normal;   // outward END DIRECTION of the segment (-d at p0, +d at
+                      // p1); doubled length (dot > 1.5) marks the other quad
+                      // side. Requires line data built by shape-builder.js.
   uniform mat4 m_mvp;
   uniform vec4 line_p;
   void main() {
-    vec3 normal = v_normal;
+    vec3 e = v_normal;
     float perp_sign = -1.0;
-    if (dot(normal, normal) > 1.5) {
+    if (dot(e, e) > 1.5) {
       perp_sign = 1.0;
-      normal *= 0.5;
+      e *= 0.5;
     }
     perp_sign *= line_p.w;
 
-    vec3 pos = v_position;
-    vec4 position = m_mvp * vec4(pos + normal * line_p.x, 1.0);
-    normal = (m_mvp * vec4(normal, 0.0)).xyz;
-    vec2 ss_normal = normalize(normal.xy);
+    // Square end cap: extend the segment slightly past its endpoint so
+    // adjacent crease lines meet cleanly at corners.
+    vec4 position = m_mvp * vec4(v_position + e * line_p.x, 1.0);
+
+    // Project the edge direction to aspect-corrected (pixel-ish) space and
+    // extrude perpendicular to IT, not to the surface normal: this makes the
+    // stroke width identical for every edge, at every camera angle.
+    vec3 se = (m_mvp * vec4(e, 0.0)).xyz;
+    vec2 v  = vec2(se.x / line_p.z, se.y);
+    float l = length(v);
+    vec2 dir_px  = l > 1e-6 ? v / l : vec2(1.0, 0.0);
+    vec2 perp_px = vec2(-dir_px.y, dir_px.x);
 
     float width = line_p.x;
-    position.x += width * line_p.z * ss_normal.y * -perp_sign;
-    position.y += width *             ss_normal.x *  perp_sign;
-    position.z -= 0.0003;
-
+    position.x += width * line_p.z * perp_px.x * perp_sign;
+    position.y += width *            perp_px.y * perp_sign;
+    position.z -= 0.003;   // depth bias replaces the old normal-push,
+                           // keeping the line in front of the surface
     gl_Position = position;
   }
 `;
@@ -230,6 +240,10 @@ gl.vertexAttribPointer(ATTR.v_normal,   3, gl.FLOAT, false, 24, 12);
 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 gl.bindVertexArray(null);
 
+// =============================================================================
+//  draw_mesh — same as v3
+// =============================================================================
+
 let vp_w = 1, vp_h = 1, dpr = 1;
 
 function draw_mesh(name, mvp, rotation, color, opacity, backface, cross_section, skip_line) {
@@ -281,7 +295,7 @@ function draw_mesh(name, mvp, rotation, color, opacity, backface, cross_section,
   if (skip_line) { gl.bindVertexArray(null); return; }
 
   const lineP = new Float32Array([
-    (1.0 * 1.0 * dpr) / vp_h,
+    (2.0 * 1.0 * dpr) / vp_h,
     0.01,
     vp_h / vp_w,
     backface ? -1.0 : 1.0,
