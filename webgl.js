@@ -295,7 +295,7 @@ function draw_mesh(name, mvp, rotation, color, opacity, backface, cross_section,
   if (skip_line) { gl.bindVertexArray(null); return; }
 
   const lineP = new Float32Array([
-    (2.0 * 1.0 * dpr) / vp_h,
+    (1.1 * 1.1 * dpr) / vp_h,
     0.01,
     vp_h / vp_w,
     backface ? -1.0 : 1.0,

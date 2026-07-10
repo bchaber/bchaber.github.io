@@ -63,6 +63,7 @@
     column-count: 2;
     column-gap: 0.25in;
     column-rule: none;
+		column-width: 3in;
     text-align: justify;
   }
 
