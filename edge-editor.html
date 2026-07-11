@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge Editor — hard/soft crease overrides</title>
+<style>
+  :root {
+    --bg: #f5f3ee; --panel: #ffffff; --ink: #2b2620; --muted: #8a8175;
+    --accent: #b05c2a; --hard: #2b2620; --soft: #b9b2a6; --hover: #2f6fde;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    display: flex; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 "Segoe UI", system-ui, sans-serif; overflow: hidden;
+  }
+  #viewport { position: relative; flex: 1; min-width: 0; cursor: grab; }
+  #viewport.dragging { cursor: grabbing; }
+  #viewport canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #overlay { pointer-events: none; }
+
+  #panel {
+    width: 320px; flex: none; background: var(--panel);
+    border-left: 1px solid #e2ddd3; padding: 20px 18px;
+    overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+  }
+  h1 { font-size: 17px; letter-spacing: 0.02em; }
+  .hint { color: var(--muted); font-size: 12.5px; }
+  .hint b { color: var(--ink); font-weight: 600; }
+
+  .row { display: flex; flex-direction: column; gap: 6px; }
+  .row label { font-size: 12px; text-transform: uppercase;
+               letter-spacing: 0.08em; color: var(--muted); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+  .check input { accent-color: var(--accent); }
+
+  #stats { font-size: 12.5px; color: var(--muted); border-top: 1px dashed #e2ddd3;
+           border-bottom: 1px dashed #e2ddd3; padding: 10px 0; }
+  #stats b { color: var(--ink); }
+
+  button {
+    font: inherit; padding: 8px 10px; border: 1px solid #d8d2c6;
+    border-radius: 6px; background: #faf8f4; color: var(--ink); cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { filter: brightness(1.08); color: #fff; }
+
+  #exportBox {
+    width: 100%; height: 180px; font: 11.5px/1.5 ui-monospace, Consolas, monospace;
+    border: 1px solid #d8d2c6; border-radius: 6px; padding: 8px;
+    background: #faf8f4; color: var(--ink); resize: vertical; white-space: pre;
+  }
+  .legend { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+  .legend span { display: inline-block; width: 26px; height: 0; margin-right: 8px;
+                 vertical-align: middle; border-top: 3px solid; }
+  .l-hard span  { border-color: var(--hard); }
+  .l-soft span  { border-color: var(--soft); border-top-style: dotted; }
+  .l-ov span    { border-color: var(--accent); }
+  .l-hover span { border-color: var(--hover); }
+</style>
+</head>
+<body>
+
+<div id="viewport">
+  <canvas id="glcanvas"></canvas>
+  <canvas id="overlay"></canvas>
+</div>
+
+<div id="panel">
+  <h1>Edge editor</h1>
+  <p class="hint">
+    <b>Drag</b> to rotate. <b>Click</b> an edge to toggle it hard ↔ soft
+    (recorded as an override). <b>Shift-click</b> resets an edge to automatic.
+    Turn on <b>show soft edges</b> to pick smooth edges and harden them.
+  </p>
+
+  <div class="row">
+    <label>Crease angle: <span id="creaseVal">40°</span></label>
+    <input type="range" id="creaseSlider" min="0" max="180" step="1" value="40">
+  </div>
+
+  <label class="check">
+    <input type="checkbox" id="showSoft"> Show soft edges
+  </label>
+
+  <div class="legend">
+    <div class="l-hard"><span></span>hard edge (auto)</div>
+    <div class="l-soft"><span></span>soft edge (shown when enabled)</div>
+    <div class="l-ov"><span></span>overridden edge</div>
+    <div class="l-hover"><span></span>hovered edge</div>
+  </div>
+
+  <div id="stats"></div>
+
+  <button id="clearBtn">Clear all overrides</button>
+  <button id="exportBtn" class="primary">Export overrides</button>
+  <textarea id="exportBox" spellcheck="false"
+    placeholder="// Click “Export overrides”, then paste the result into
+// EDGE_OVERRIDES in shape-builder.js"></textarea>
+</div>
+
+<script src="shape-builder.js"></script>
+<script>
+  // Load webgl-renderer.js for its library half only (matrix helpers, shader
+  // sources, program/VAO factories, geometry packing) — the editor drives its
+  // own render loop and rebuilds geometry on the fly, so the standalone
+  // turntable viewer must not start.
+  const RENDERER_NO_AUTOSTART = true;
+</script>
+<script src="webgl-renderer.js"></script>
+<script>
+const _builder = new ShapeBuilder();
+_builder.addBox({    size: [1.7, 0.35, 1.7],  translate: [0, -0.6, 0] });
+_builder.addWedge({  size: [1.05, 0.6, .45], translate: [0, 0.0, 0],
+                     rotate: [0, Math.PI / 7, 0] });
+_builder.addCylinder({ radiusTop: 0.1, radiusBottom: 0.2, height: 0.8, translate: [-0.5, 0.0, -0.5] })
+
+const EDGE_OVERRIDES = [
+  { a: [-0.42929, 0.4, -0.57071], b: [-0.35858, -0.4, -0.64142], hard: true },
+  { a: [-0.57063, 0.3, 0.02507], b: [0.57063, -0.3, -0.02507], hard: true },
+];
+
+const _mesh = _builder.build({ creaseAngleDeg: 40, overrides: EDGE_OVERRIDES });
+const SURF_VERTS   = _mesh.surfVerts;
+const SURF_INDICES = _mesh.surfIndices;
+const LINE_VERTS   = _mesh.lineVerts;
+const LINE_INDICES = _mesh.lineIndices;
+const CONTOUR_VERTS   = _mesh.contourVerts;
+const CONTOUR_INDICES = _mesh.contourIndices;
+</script>
+<script>
+"use strict";
+
+// =============================================================================
+//  Uses the same `_builder` instance defined at the bottom of shape-builder.js,
+//  so whatever composite you define there is what you edit here.
+//
+//  All rendering machinery (matrices, shaders, VAO layouts, buffer packing)
+//  comes from webgl-renderer.js — nothing GL-related is duplicated here.
+// =============================================================================
+
+const viewport = document.getElementById("viewport");
+const canvas   = document.getElementById("glcanvas");
+const overlay  = document.getElementById("overlay");
+const ctx2d    = overlay.getContext("2d");
+const gl       = canvas.getContext("webgl2", { antialias: true });
+if (!gl) { alert("WebGL2 not available in this browser."); throw new Error("no webgl2"); }
+
+// ---------------------------------------------------------------------------
+//  Editor state
+//  (turntableAngle / angularVelocity / isDragging / vp_w / vp_h / dpr are the
+//  shared globals declared in webgl-renderer.js — assigned, not redeclared)
+// ---------------------------------------------------------------------------
+let creaseAngle   = 40;
+const overrides   = new Map();     // edgeKey -> { a, b, hard }
+let showSoft      = false;
+let mesh          = null;          // last build() result
+let hoveredKey    = null;
+
+turntableAngle = 0.6;
+let moved = 0, lastX = 0, lastY = 0, mouseX = -1, mouseY = -1;
+
+const TILT = 0.45, PROJ_H = 1.5, LINE_PX = 2.0, EDITOR_FRICTION = 0.92;
+let css_w = 1, css_h = 1;
+
+// ---------------------------------------------------------------------------
+//  Programs + VAOs from the shared renderer library
+// ---------------------------------------------------------------------------
+const programs      = createRenderPrograms(gl);
+const surfaceShader = programs.surface;
+const lineShader    = programs.line;
+const contourShader = programs.contour;
+
+// Buffers — rebuilt whenever the mesh changes
+const vbo = gl.createBuffer();
+const ibo = gl.createBuffer();
+const vao = createSurfaceVao(gl, vbo, ibo);
+
+const cvbo = gl.createBuffer();
+const cibo = gl.createBuffer();
+const contourVao = createContourVao(gl, cvbo, cibo);
+
+let drawInfo = { surfCount: 0, lineOffset: 0, lineCount: 0, contourCount: 0 };
+
+function rebuild() {
+  mesh = _builder.build({
+    creaseAngleDeg: creaseAngle,
+    overrides: [...overrides.values()],
+  });
+
+  const packed = packSurfaceAndLines(mesh.surfVerts, mesh.surfIndices,
+                                     mesh.lineVerts, mesh.lineIndices);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, packed.verts, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, packed.indices, gl.STATIC_DRAW);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, cvbo);
+  gl.bufferData(gl.ARRAY_BUFFER, mesh.contourVerts, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cibo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.contourIndices, gl.STATIC_DRAW);
+
+  drawInfo = {
+    surfCount:    packed.surfIndexCount,
+    lineOffset:   packed.lineIndexOffset,
+    lineCount:    packed.lineIndexCount,
+    contourCount: mesh.contourIndices.length,
+  };
+  updateStats();
+}
+
+function updateStats() {
+  const s = mesh.stats;
+  document.getElementById("stats").innerHTML =
+    `<b>${s.triangles}</b> triangles · <b>${s.hardEdges}</b> hard edges of ` +
+    `<b>${s.edges}</b> · <b>${overrides.size}</b> override${overrides.size === 1 ? "" : "s"}`;
+}
+
+// ---------------------------------------------------------------------------
+//  Resize (updates the shared vp_w / vp_h / dpr globals from webgl-renderer.js)
+// ---------------------------------------------------------------------------
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  css_w = viewport.clientWidth;
+  css_h = viewport.clientHeight;
+  const w = Math.max(1, Math.round(css_w * dpr));
+  const h = Math.max(1, Math.round(css_h * dpr));
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;   canvas.height = h;
+    overlay.width = w;  overlay.height = h;
+  }
+  vp_w = w; vp_h = h;
+  gl.viewport(0, 0, w, h);
+}
+
+// ---------------------------------------------------------------------------
+//  Projection helpers for picking + overlay drawing
+// ---------------------------------------------------------------------------
+let curMvp = null, curRot = null;
+
+function projectToScreen(p) {
+  const m = curMvp;
+  const x = m[0]*p[0] + m[4]*p[1] + m[8]*p[2] + m[12];
+  const y = m[1]*p[0] + m[5]*p[1] + m[9]*p[2] + m[13];
+  return [(x + 1) * 0.5 * css_w, (1 - y) * 0.5 * css_h];   // ortho: w = 1
+}
+function rotatedZ(n) {
+  const m = curRot;
+  return m[2]*n[0] + m[6]*n[1] + m[10]*n[2];
+}
+function distToSegment(px, py, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len2 = dx*dx + dy*dy;
+  let t = len2 > 0 ? ((px - a[0]) * dx + (py - a[1]) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const qx = a[0] + t*dx - px, qy = a[1] + t*dy - py;
+  return Math.hypot(qx, qy);
+}
+
+function pickEdge(px, py) {
+  if (!mesh || !curMvp) return null;
+  let best = null, bestDist = 9;                 // px threshold
+  for (const e of mesh.edges) {
+    if (rotatedZ(e.normal) < 0.05) continue;     // back-facing: not pickable
+    if (!showSoft && !e.hard && !e.overridden) continue;
+    const sa = projectToScreen(e.a), sb = projectToScreen(e.b);
+    const d = distToSegment(px, py, sa, sb);
+    if (d < bestDist) { bestDist = d; best = e; }
+  }
+  return best;
+}
+
+// ---------------------------------------------------------------------------
+//  Overlay drawing (2D canvas on top of the GL view)
+// ---------------------------------------------------------------------------
+function drawOverlay() {
+  ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx2d.clearRect(0, 0, css_w, css_h);
+  if (!mesh) return;
+
+  ctx2d.lineCap = "round";
+  let hovered = null;
+
+  for (const e of mesh.edges) {
+    if (rotatedZ(e.normal) < 0.05) continue;
+    const isHovered = hoveredKey !== null && edgeKeyOf(e) === hoveredKey;
+    if (isHovered) { hovered = e; continue; }    // draw last, on top
+
+    if (e.overridden) {
+      const sa = projectToScreen(e.a), sb = projectToScreen(e.b);
+      ctx2d.strokeStyle = "#b05c2a";
+      ctx2d.lineWidth = 2.5;
+      ctx2d.setLineDash(e.hard ? [] : [5, 4]);   // dashed = forced soft
+      ctx2d.beginPath(); ctx2d.moveTo(sa[0], sa[1]); ctx2d.lineTo(sb[0], sb[1]);
+      ctx2d.stroke();
+    } else if (showSoft && !e.hard) {
+      const sa = projectToScreen(e.a), sb = projectToScreen(e.b);
+      ctx2d.strokeStyle = "rgba(43, 38, 32, 0.16)";
+      ctx2d.lineWidth = 1;
+      ctx2d.setLineDash([]);
+      ctx2d.beginPath(); ctx2d.moveTo(sa[0], sa[1]); ctx2d.lineTo(sb[0], sb[1]);
+      ctx2d.stroke();
+    }
+  }
+
+  if (hovered) {
+    const sa = projectToScreen(hovered.a), sb = projectToScreen(hovered.b);
+    ctx2d.strokeStyle = "#2f6fde";
+    ctx2d.lineWidth = 4;
+    ctx2d.setLineDash([]);
+    ctx2d.beginPath(); ctx2d.moveTo(sa[0], sa[1]); ctx2d.lineTo(sb[0], sb[1]);
+    ctx2d.stroke();
+  }
+}
+
+function edgeKeyOf(e) { return ShapeBuilder.edgeKey(e.a, e.b); }
+
+// ---------------------------------------------------------------------------
+//  Render loop
+// ---------------------------------------------------------------------------
+gl.clearColor(0.961, 0.953, 0.933, 1.0);
+gl.clearDepth(1.0);
+gl.enable(gl.DEPTH_TEST);
+gl.depthFunc(gl.LEQUAL);
+gl.enable(gl.CULL_FACE);
+
+const GEOMETRY_COLOR = new Float32Array([0.890, 0.871, 0.796, 1.0]);
+const LINE_COLOR     = new Float32Array([0.890*0.6, 0.871*0.6, 0.796*0.6, 1.0]);
+
+function frame() {
+  resize();
+
+  if (!isDragging) {
+    turntableAngle  += angularVelocity;
+    angularVelocity *= EDITOR_FRICTION;
+  }
+
+  const rot = mat4_mul(mat4_rotX(TILT), mat4_rotY(turntableAngle));
+  const proj = mat4_ortho(PROJ_H * (vp_w / vp_h), PROJ_H, -0.4);
+  curMvp = mat4_mul(proj, rot);
+  curRot = rot;
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.bindVertexArray(vao);
+
+  // Surface
+  gl.cullFace(gl.BACK);
+  gl.useProgram(surfaceShader.program);
+  gl.uniformMatrix4fv(surfaceShader.uniforms["m_mvp"], false, curMvp);
+  gl.uniformMatrix3fv(surfaceShader.uniforms["m_rot"], false, mat3_from_mat4(rot));
+  gl.uniform4fv(surfaceShader.uniforms["color"], GEOMETRY_COLOR);
+  gl.drawElements(gl.TRIANGLES, drawInfo.surfCount, gl.UNSIGNED_INT, 0);
+
+  const lineP = makeLineParams(LINE_PX, 1.0);
+
+  // Crease lines
+  if (drawInfo.lineCount > 0) {
+    gl.useProgram(lineShader.program);
+    gl.uniformMatrix4fv(lineShader.uniforms["m_mvp"], false, curMvp);
+    gl.uniform4fv(lineShader.uniforms["line_p"], lineP);
+    gl.uniform4fv(lineShader.uniforms["color"], LINE_COLOR);
+    gl.drawElements(gl.TRIANGLES, drawInfo.lineCount,
+                    gl.UNSIGNED_INT, drawInfo.lineOffset * 4);
+  }
+
+  // View-dependent silhouette outlines (not editable: they move with the camera)
+  if (drawInfo.contourCount > 0) {
+    gl.useProgram(contourShader.program);
+    gl.bindVertexArray(contourVao);
+    gl.uniformMatrix4fv(contourShader.uniforms["m_mvp"], false, curMvp);
+    gl.uniformMatrix3fv(contourShader.uniforms["m_rot"], false, mat3_from_mat4(rot));
+    gl.uniform4fv(contourShader.uniforms["line_p"], lineP);
+    gl.uniform4fv(contourShader.uniforms["color"],  LINE_COLOR);
+    gl.drawElements(gl.TRIANGLES, drawInfo.contourCount, gl.UNSIGNED_INT, 0);
+  }
+
+  gl.bindVertexArray(null);
+
+  // Hover picking + overlay (skip picking while rotating)
+  if (!isDragging && mouseX >= 0) {
+    const e = pickEdge(mouseX, mouseY);
+    hoveredKey = e ? edgeKeyOf(e) : null;
+    viewport.style.cursor = e ? "pointer" : "grab";
+  }
+  drawOverlay();
+
+  requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------------------------
+//  Mouse: drag = rotate, click = toggle edge, shift-click = reset edge
+// ---------------------------------------------------------------------------
+viewport.addEventListener("mousedown", (ev) => {
+  isDragging = true; moved = 0;
+  lastX = ev.clientX; lastY = ev.clientY;
+  angularVelocity = 0;
+  viewport.classList.add("dragging");
+});
+window.addEventListener("mousemove", (ev) => {
+  const r = viewport.getBoundingClientRect();
+  mouseX = ev.clientX - r.left;
+  mouseY = ev.clientY - r.top;
+  if (!isDragging) return;
+  const dx = ev.clientX - lastX, dy = ev.clientY - lastY;
+  moved += Math.abs(dx) + Math.abs(dy);
+  turntableAngle  += dx * DRAG_SENSITIVITY;
+  angularVelocity  = dx * DRAG_SENSITIVITY;
+  lastX = ev.clientX; lastY = ev.clientY;
+});
+window.addEventListener("mouseup", (ev) => {
+  if (!isDragging) return;
+  isDragging = false;
+  viewport.classList.remove("dragging");
+  if (moved >= 4) return;                        // it was a drag, not a click
+
+  angularVelocity = 0;
+  const e = pickEdge(mouseX, mouseY);
+  if (!e) return;
+  const key = edgeKeyOf(e);
+  if (ev.shiftKey) {
+    overrides.delete(key);                       // back to automatic
+  } else {
+    overrides.set(key, { a: e.a.slice(), b: e.b.slice(), hard: !e.hard });
+  }
+  rebuild();
+});
+viewport.addEventListener("mouseleave", () => { mouseX = mouseY = -1; hoveredKey = null; });
+
+// ---------------------------------------------------------------------------
+//  Panel controls
+// ---------------------------------------------------------------------------
+const slider = document.getElementById("creaseSlider");
+slider.addEventListener("input", () => {
+  creaseAngle = +slider.value;
+  document.getElementById("creaseVal").textContent = creaseAngle + "\u00b0";
+  rebuild();
+});
+
+document.getElementById("showSoft").addEventListener("change", (ev) => {
+  showSoft = ev.target.checked;
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  overrides.clear();
+  rebuild();
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const f = (v) => +v.toFixed(5);
+  const lines = [...overrides.values()].map((o) =>
+    `  { a: [${o.a.map(f).join(", ")}], b: [${o.b.map(f).join(", ")}], hard: ${o.hard} },`);
+  document.getElementById("exportBox").value =
+    "// Paste into EDGE_OVERRIDES in shape-builder.js\n" +
+    "// (build with { creaseAngleDeg: " + creaseAngle + ", overrides: EDGE_OVERRIDES })\n" +
+    "const EDGE_OVERRIDES = [\n" + lines.join("\n") + "\n];";
+});
+
+// ---------------------------------------------------------------------------
+rebuild();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
