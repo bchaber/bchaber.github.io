@@ -1,21 +1,3 @@
-/* ------------------------------------------------------------------
- * Two-Stream Instability — 1D Particle-In-Cell (PIC) simulation
- * ------------------------------------------------------------------
- * Renders a live phase-space plot (x vs v) on an HTML canvas.
- * Two cold electron beams drift in opposite directions through a
- * neutralizing ion background; the streams are unstable and the
- * classic phase-space "vortex" structure forms.
- *
- * Units are normalized:  ω_p = 1, q_e = -1, m_e = 1, ε_0 = 1.
- * The simulation is intentionally simplified (NGP deposition,
- * naive O(Ng^2) Poisson solve) — clarity over rigor.
- *
- * Usage:
- *   <canvas id="phase" width="900" height="500"></canvas>
- *   <script src="two_stream.js"></script>
- *   <script>TwoStream.start(document.getElementById('phase'));</script>
- * ------------------------------------------------------------------ */
-
 (function (global) {
   'use strict';
 
@@ -35,6 +17,8 @@
     axis:    '#888',
     grid:    '#eee',
     text:    '#333',
+    aspect:  0.5,         // canvas height / width when sized by CSS
+    maxDpr:  2,
   };
 
   // ---------- Helpers ----------
@@ -97,7 +81,7 @@
     return { p, N, dx, x, v, stream, rho, phi, E, qe, t: 0 };
   }
 
-  // ---------- Charge deposition (nearest grid point) ----------
+  // ---------- Charge deposition (cloud-in-cell) ----------
   function deposit(sim) {
     const { p, N, dx, x, rho, qe } = sim;
     const Ng = p.Ng;
@@ -212,13 +196,23 @@
     const W = ctx.canvas._logicalW || ctx.canvas.width;
     const H = ctx.canvas._logicalH || ctx.canvas.height;
 
-    // Plot area (margins for axes)
-    const ML = 56, MR = 16, MT = 24, MB = 40;
+    // Adaptive layout: shrink margins, ticks and labels on narrow canvases
+    // (same tiers as tline.js so the two figures stay visually consistent).
+    const compact = W < 420;
+    const tiny    = W < 320;
+    const ML = tiny ? 34 : compact ? 44 : 56;
+    const MR = compact ? 10 : 16;
+    const MT = compact ? 20 : 24;
+    const MB = compact ? 32 : 40;
     const PW = W - ML - MR;
     const PH = H - MT - MB;
+    const tickFont  = (compact ? 10 : 11) + 'px "JetBrains Mono", ui-monospace, monospace';
+    const labelFont = (compact ? 'italic 11px' : 'italic 13px') + ' "STIX Two Text", "Times New Roman", serif';
+    const titleFont = (compact ? '11px' : '12px') + ' "STIX Two Text", "Times New Roman", serif';
+    const nXTicks   = tiny ? 2 : compact ? 3 : 5;
 
     // Clear
-    ctx.fillStyle = DEFAULTS.bg;
+    ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, W, H);
 
     // Plot background
@@ -226,11 +220,12 @@
     ctx.fillRect(ML, MT, PW, PH);
 
     // Gridlines
-    ctx.strokeStyle = DEFAULTS.grid;
+    ctx.strokeStyle = p.grid;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let i = 1; i < 10; i++) {
-      const gx = ML + (PW * i) / 10;
+    const nVGrid = compact ? 6 : 10;
+    for (let i = 1; i < nVGrid; i++) {
+      const gx = ML + (PW * i) / nVGrid;
       ctx.moveTo(gx, MT); ctx.lineTo(gx, MT + PH);
     }
     for (let j = 1; j < 6; j++) {
@@ -250,7 +245,8 @@
     // We rasterize each particle as a single pixel into a small offscreen
     // image, then drawImage() it scaled up to fill the plot area. This makes
     // particles visible (each "pixel" covers ~scale CSS px) and avoids
-    // per-particle box loops.
+    // per-particle box loops. The buffer is recreated whenever the plot
+    // area changes size, so it follows responsive re-layouts.
     const RES_DIV = 2; // 1 small px == RES_DIV CSS px on screen
     const lowW = Math.max(1, (PW / RES_DIV) | 0);
     const lowH = Math.max(1, (PH / RES_DIV) | 0);
@@ -267,7 +263,7 @@
     const offCtx = render._offCtx;
     const img    = render._offImg;
     const data   = img.data;
-    // Clear to plot bg (#fbfaf7)
+    // Clear to white
     for (let k = 0; k < data.length; k += 4) {
       data[k]   = 0xff; data[k+1] = 0xff; data[k+2] = 0xff; data[k+3] = 0xff;
     }
@@ -302,61 +298,65 @@
     ctx.imageSmoothingEnabled = true;
 
     // Axes frame
-    ctx.strokeStyle = DEFAULTS.axis;
+    ctx.strokeStyle = p.axis;
     ctx.lineWidth = 1;
     ctx.strokeRect(ML + 0.5, MT + 0.5, PW, PH);
 
     // Tick labels
-    ctx.fillStyle = DEFAULTS.text;
-    ctx.font = '11px "JetBrains Mono", ui-monospace, monospace';
+    ctx.fillStyle = p.text;
+    ctx.font = tickFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    for (let i = 0; i <= 5; i++) {
-      const xv = (p.L * i) / 5;
-      const px = ML + (PW * i) / 5;
+    for (let i = 0; i <= nXTicks; i++) {
+      const xv = (p.L * i) / nXTicks;
+      const px = ML + (PW * i) / nXTicks;
       ctx.fillText(xv.toFixed(0), px, MT + PH + 6);
     }
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    // Use CSS-pixel scale for labels (yMid/syScale above are in device px for ImageData)
     const yMidCss = MT + PH / 2;
     const syScaleCss = PH / (2 * p.vRange);
-    for (let j = -2; j <= 2; j++) {
+    const yStep = tiny ? 2 : 1;              // fewer y ticks when tiny
+    for (let j = -2; j <= 2; j += yStep) {
       const vv = (p.vRange * j) / 2;
       const py = yMidCss - vv * syScaleCss;
       ctx.fillText(vv.toFixed(1), ML - 6, py);
     }
 
     // Axis labels
-    ctx.fillStyle = DEFAULTS.text;
-    ctx.font = 'italic 13px "STIX Two Text", "Times New Roman", serif';
+    ctx.fillStyle = p.text;
+    ctx.font = labelFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText('x  (position)', ML + PW / 2, H - 10);
+    ctx.fillText(compact ? 'x' : 'x  (position)', ML + PW / 2, H - (compact ? 6 : 10));
     ctx.save();
-    ctx.translate(14, MT + PH / 2);
+    ctx.translate(compact ? 11 : 14, MT + PH / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText('v  (drift velocity)', 0, 0);
+    ctx.fillText(compact ? 'v' : 'v  (drift velocity)', 0, 0);
     ctx.restore();
 
     // Title + time + legend
-    ctx.font = '12px "STIX Two Text", "Times New Roman", serif';
+    ctx.font = titleFont;
     ctx.textAlign = 'left';
-    ctx.fillStyle = DEFAULTS.text;
-    ctx.fillText('Two-stream instability — phase space', ML, MT - 8);
+    ctx.fillStyle = p.text;
+    ctx.fillText(compact ? 'Two-stream instability'
+                         : 'Two-stream instability — phase space',
+                 ML, MT - 8);
 
     ctx.textAlign = 'right';
-    ctx.fillText('t = ' + sim.t.toFixed(2) + ' / ωₚ⁻¹', ML + PW, MT - 8);
+    ctx.fillText('t = ' + sim.t.toFixed(2) + (compact ? '' : ' / ωₚ⁻¹'),
+                 ML + PW, MT - 8);
 
     // Legend
-    const lx = ML + 12, ly = MT + 12;
+    const lx = ML + 10, ly = MT + 10;
     ctx.fillStyle = p.colorA;
     ctx.fillRect(lx, ly, 10, 10);
     ctx.fillStyle = p.colorB;
     ctx.fillRect(lx, ly + 16, 10, 10);
-    ctx.fillStyle = DEFAULTS.text;
+    ctx.fillStyle = p.text;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
+    ctx.font = tickFont;
     ctx.fillText('+v₀', lx + 16, ly + 5);
     ctx.fillText('−v₀', lx + 16, ly + 21);
   }
@@ -366,45 +366,117 @@
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
+  // Translucent "play" badge shown when the simulation is paused,
+  // so the click-to-toggle affordance is visible on touch devices.
+  function drawPlayBadge(ctx) {
+    const W = ctx.canvas._logicalW || ctx.canvas.width;
+    const H = ctx.canvas._logicalH || ctx.canvas.height;
+    const cx = W / 2, cy = H / 2, r = Math.min(24, W * 0.07);
+    ctx.save();
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = '#1d1b17';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#fffdf8';
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.28, cy - r * 0.42);
+    ctx.lineTo(cx - r * 0.28, cy + r * 0.42);
+    ctx.lineTo(cx + r * 0.46, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   // ---------- Public API ----------
   function start(canvas, opts) {
-    // Scale backing store for HiDPI (2× by default)
-    const DPR = (opts && opts.dpr) || 2;
-    const cssW = canvas.width;
-    const cssH = canvas.height;
-    canvas.style.width  = cssW + 'px';
-    canvas.style.height = cssH + 'px';
-    canvas.width  = cssW * DPR;
-    canvas.height = cssH * DPR;
+    opts = opts || {};
     const ctx = canvas.getContext('2d');
-    ctx.scale(DPR, DPR);
-    Object.defineProperty(ctx.canvas, '_logicalW', { value: cssW });
-    Object.defineProperty(ctx.canvas, '_logicalH', { value: cssH });
-
     const sim = createSim(opts);
-    let running = (opts && opts.autoStart !== false);
+    let running = opts.autoStart !== false;
+    let rafId = 0;
+
+    // Preferred aspect ratio: explicit option, else the width/height
+    // attributes the canvas was authored with, else 1:2.
+    const attrW = parseFloat(canvas.getAttribute('width'))  || 400;
+    const attrH = parseFloat(canvas.getAttribute('height')) || 200;
+    const aspect = opts.aspect || (attrH / attrW) || DEFAULTS.aspect;
+    const maxDpr = opts.dpr || sim.p.maxDpr;
+
+    // Size the drawing buffer from the CSS layout size (the stylesheet
+    // sets width: 100%), times the device pixel ratio for sharpness.
+    function layout() {
+      const dpr = Math.min(global.devicePixelRatio || 1, maxDpr);
+      const cssW = canvas.clientWidth ||
+                   (canvas.parentElement && canvas.parentElement.clientWidth) ||
+                   attrW;
+      const cssH = Math.round(cssW * aspect);
+      canvas.style.height = cssH + 'px';
+      const pw = Math.max(1, Math.round(cssW * dpr));
+      const ph = Math.max(1, Math.round(cssH * dpr));
+      if (canvas.width !== pw || canvas.height !== ph) {
+        canvas.width = pw;
+        canvas.height = ph;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvas._logicalW = cssW;
+      canvas._logicalH = cssH;
+    }
+
+    function draw() {
+      render(sim, ctx);
+      if (!running) drawPlayBadge(ctx);
+    }
 
     function frame() {
       if (!running) return;
       // a few sub-steps per frame for smoother dynamics
-      const subSteps = 1;
+      const subSteps = opts.stepsPerFrame || 1;
       for (let s = 0; s < subSteps; s++) step(sim);
       render(sim, ctx);
-      requestAnimationFrame(frame);
+      rafId = requestAnimationFrame(frame);
     }
 
-    render(sim, ctx);
-    requestAnimationFrame(frame);
+    // Re-layout when the canvas' CSS size changes (rotation, window
+    // resize, container reflow) and repaint at the new size.
+    let ro = null;
+    let onWinResize = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => { layout(); draw(); });
+      ro.observe(canvas);
+    } else if (typeof global.addEventListener === 'function') {
+      onWinResize = () => { layout(); draw(); };
+      global.addEventListener('resize', onWinResize);
+    }
+
+    layout();
+    draw();
+    if (running) rafId = requestAnimationFrame(frame);
 
     return {
       sim,
       isRunning: () => running,
-      stop:   () => { running = false; },
-      resume: () => { if (!running) { running = true; requestAnimationFrame(frame); } },
-      reset:  (newOpts) => {
+      stop: () => {
+        running = false;
+        cancelAnimationFrame(rafId);
+        draw();                 // repaint with the play badge
+      },
+      resume: () => {
+        if (!running) {
+          running = true;
+          rafId = requestAnimationFrame(frame);
+        }
+      },
+      reset: (newOpts) => {
         const next = createSim(Object.assign({}, sim.p, newOpts || {}));
         Object.assign(sim, next);
-        render(sim, ctx);
+        draw();
+      },
+      destroy: () => {
+        running = false;
+        cancelAnimationFrame(rafId);
+        if (ro) ro.disconnect();
+        if (onWinResize) global.removeEventListener('resize', onWinResize);
       },
     };
   }
