@@ -65,7 +65,7 @@
   <figure>
     <canvas id="fig3" width="400" height="300" style="border: 1px solid black"></canvas>
     <figcaption><span class="label">Figure 3</span>
-      A simple 3D shape.
+      Second-order Finite Elements: hexahedron and tetrahedron.
     </figcaption>
   </figure>
 
@@ -144,27 +144,8 @@
     throw new Error("WebGL 2 not supported");
   }
 </script>
-<script src="shape-builder.js"></script>
-<script>
-const _builder = new ShapeBuilder();
-_builder.addBox({    size: [1.7, 0.35, 1.7],  translate: [0, -0.6, 0] });
-_builder.addWedge({  size: [1.05, 0.6, .45], translate: [0, 0.0, 0],
-                     rotate: [0, Math.PI / 7, 0] });
-_builder.addCylinder({ radiusTop: 0.1, radiusBottom: 0.2, height: 0.8, translate: [-0.5, 0.0, -0.5] })
 
-const EDGE_OVERRIDES = [
-  { a: [-0.42929, 0.4, -0.57071], b: [-0.35858, -0.4, -0.64142], hard: true },
-  { a: [-0.57063, 0.3, 0.02507], b: [0.57063, -0.3, -0.02507], hard: true },
-];
-
-const _mesh = _builder.build({ creaseAngleDeg: 40, overrides: EDGE_OVERRIDES });
-const SURF_VERTS   = _mesh.surfVerts;
-const SURF_INDICES = _mesh.surfIndices;
-const LINE_VERTS   = _mesh.lineVerts;
-const LINE_INDICES = _mesh.lineIndices;
-const CONTOUR_VERTS   = _mesh.contourVerts;
-const CONTOUR_INDICES = _mesh.contourIndices;
-</script>
-<script src="webgl-renderer.js"></script>
+<script src="fem-builder.js"></script>
+<script src="fem-renderer.js"></script>
 <script src="turntable.js"></script>
 </html>
