@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perceptron Bench Mk. II — one hidden panel, or two</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --walnut-1:#3a2417; --walnut-2:#22150d;
+    --ply:#d9c096; --panel:#151517;
+    --chrome-1:#e6eaee; --chrome-2:#8d949c;
+    --ivory:#efe7d3; --led:#ff3b2f; --led-ok:#5ce07a;
+    --amber:#e8a33c; --wire:#3b3f45;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(120% 80% at 50% 0%, #4a3020 0%, var(--walnut-1) 45%, var(--walnut-2) 100%);
+    color:var(--ivory); font-family:"IBM Plex Mono", ui-monospace, monospace;
+    -webkit-font-smoothing:antialiased; min-height:100vh; padding:28px 18px 60px;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;
+    background:repeating-linear-gradient(93deg, rgba(0,0,0,.22) 0 2px, rgba(255,255,255,.02) 2px 7px, rgba(0,0,0,.10) 7px 11px);
+    mix-blend-mode:multiply}
+  .wrap{max-width:1180px;margin:0 auto;position:relative;z-index:1}
+
+  .eyebrow{font-family:"Oswald",sans-serif;font-weight:400;letter-spacing:.34em;font-size:11px;
+    text-transform:uppercase;color:#c9a878;margin:0 0 10px}
+  h1{font-family:"Oswald",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.02em;
+    line-height:.95;margin:0;font-size:clamp(28px,5.2vw,58px);color:var(--ivory);text-shadow:0 2px 0 rgba(0,0,0,.45)}
+  h1 em{font-style:normal;color:var(--amber)}
+  .deck{max-width:66ch;font-size:13.5px;line-height:1.6;color:#d8c7ae;margin:14px 0 22px}
+  .deck b{color:var(--ivory);font-weight:600}
+
+  .bench{position:relative;filter:drop-shadow(0 30px 40px rgba(0,0,0,.55))}
+  .bench svg{display:block;width:100%;height:auto;touch-action:none}
+  .knob-hit{cursor:grab}.knob-hit:active{cursor:grabbing}
+  .sw-hit{cursor:pointer}
+  .knob-hit:focus-visible .focusring,.sw-hit:focus-visible .focusring{opacity:1}
+  .focusring{opacity:0;transition:opacity .12s}
+
+  .console{display:grid;gap:16px;margin-top:26px;
+    grid-template-columns:minmax(250px,1fr) minmax(320px,1.3fr) minmax(250px,1fr)}
+  @media (max-width:960px){.console{grid-template-columns:1fr}}
+
+  .card{background:linear-gradient(180deg,#232326 0%, #151517 60%);border:1px solid #45474d;border-radius:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 10px 22px rgba(0,0,0,.45);padding:16px 16px 18px;position:relative}
+  .card h2{font-family:"Oswald",sans-serif;font-weight:500;font-size:12px;letter-spacing:.26em;
+    text-transform:uppercase;color:#a9b0b8;margin:0 0 14px}
+  .screw{position:absolute;width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--chrome-1), var(--chrome-2) 60%, #4b5057);box-shadow:0 1px 1px rgba(0,0,0,.6)}
+  .screw.tl{top:7px;left:7px}.screw.tr{top:7px;right:7px}.screw.bl{bottom:7px;left:7px}.screw.br{bottom:7px;right:7px}
+
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px}
+  button{font-family:"Oswald",sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:#20222a;background:linear-gradient(180deg,#e9edf1,#a7aeb6);border:1px solid #6b7178;border-radius:3px;
+    padding:9px 12px;cursor:pointer;box-shadow:0 2px 0 #5d6369, 0 4px 8px rgba(0,0,0,.4)}
+  button:hover{background:linear-gradient(180deg,#f6f9fb,#b6bdc5)}
+  button:active{transform:translateY(2px);box-shadow:0 0 0 #5d6369, 0 2px 5px rgba(0,0,0,.4)}
+  button.primary{background:linear-gradient(180deg,#f0a94a,#c9762a);color:#25150a;border-color:#7a4517;
+    box-shadow:0 2px 0 #7a4517,0 4px 8px rgba(0,0,0,.45)}
+  button.primary:hover{background:linear-gradient(180deg,#ffbe63,#d9832f)}
+  button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .gates{display:flex;gap:6px;margin-bottom:14px}
+  .gates button{flex:1;padding:8px 4px;font-size:11px;letter-spacing:.1em;
+    background:linear-gradient(180deg,#3a3c42,#232529);color:#aeb5bd;border-color:#54575e;box-shadow:0 2px 0 #17181b}
+  .gates button[aria-pressed="true"]{background:linear-gradient(180deg,#f0a94a,#c9762a);color:#25150a;border-color:#7a4517}
+
+  .rack{align-items:center}
+  .rack .racklbl{flex:1;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:#9aa1a9}
+  .rack button{flex:0 0 46px}
+
+  .field{margin-top:14px}
+  .field label{display:block;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:#9aa1a9;margin-bottom:6px}
+  .field .val{color:var(--ivory);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--amber);background:transparent}
+  .check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11.5px;color:#9aa1a9;cursor:pointer}
+  .check input{accent-color:var(--amber);width:15px;height:15px}
+
+  .readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+  .ro{background:#0c0c0e;border:1px solid #3a3c42;border-radius:3px;padding:8px 6px;text-align:center}
+  .ro span{display:block;font-family:"Oswald",sans-serif;font-size:9.5px;letter-spacing:.16em;color:#7d848c}
+  .ro b{display:block;font-size:18px;font-weight:600;color:var(--ivory);margin-top:3px}
+  .ro b.ok{color:var(--led-ok)}
+  .spark{display:block;width:100%;height:52px;margin-top:10px;background:#0c0c0e;border:1px solid #3a3c42;border-radius:3px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-family:"Oswald",sans-serif;font-weight:400;font-size:10px;letter-spacing:.14em;
+    color:#868d95;text-align:right;padding:0 5px 8px;border-bottom:1px solid #3c3e44}
+  th:first-child{text-align:left}
+  td{padding:7px 5px;text-align:right;border-bottom:1px solid #26282d;color:#d5dae0}
+  td:first-child{text-align:left;font-family:"Oswald",sans-serif;letter-spacing:.08em;color:#9aa1a9}
+  tr.active td{background:rgba(232,163,60,.13);color:var(--ivory)}
+  tr.active td:first-child{color:var(--amber)}
+  .mark.good{color:var(--led-ok)}.mark.bad{color:var(--led)}
+
+  .log{margin-top:14px;font-size:11.5px;line-height:1.55;color:#a8b0b8;background:#0c0c0e;border:1px solid #303238;
+    border-radius:3px;padding:10px;height:112px;overflow:hidden}
+  .log p{margin:0 0 5px}.log p:first-child{color:var(--ivory)}.log .hl{color:var(--amber)}
+
+  .mapwrap{position:relative;width:100%;aspect-ratio:1;background:#0c0c0e;border:1px solid #3a3c42;border-radius:3px;overflow:hidden}
+  .mapwrap canvas{position:absolute;inset:0;width:100%;height:100%}
+  .mapwrap svg{position:absolute;inset:0;width:100%;height:100%}
+  .note{font-size:11.5px;line-height:1.55;color:#98a0a8;margin:12px 0 0}
+  .note code{color:var(--amber);font-size:11.5px}
+
+  footer{max-width:1180px;margin:34px auto 0;font-size:12px;line-height:1.65;color:#b09a7f}
+  footer b{color:var(--ivory);font-family:"Oswald",sans-serif;letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+  footer p{max-width:78ch}
+  @media (prefers-reduced-motion: reduce){*{transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<!--
+<p class="eyebrow">Bench unit Mk. II · switchable hidden panel</p>
+  <h1>One hidden panel,<br>or <em>two</em></h1>
+  <p class="deck">Each neuron draws one straight line, so XOR is out of reach for any single one of them. This bench puts a rack of hidden neurons in front of the output neuron, and a selector on the rack that takes the second one offline. <b>Offline means every knob on that panel is wound to zero and held there</b> — the wiring stays, the panel just stops contributing. Run XOR with one panel and the error stops falling with three of the four cases right; the fourth is out of reach no matter how long you leave it running. Switch the second panel in and the same rule solves it.
+</p>
+ -->
+  <div class="bench">
+    <svg id="scene" viewBox="0 0 1280 720" role="img" aria-label="Two-layer bench: two input switches, a rack selector, three knob panels, two hidden meters and an output meter">
+      <defs>
+        <linearGradient id="gPly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3cda6"/><stop offset="1" stop-color="#c9ac7e"/></linearGradient>
+        <linearGradient id="gPanel" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#2a2b2f"/><stop offset="1" stop-color="#101012"/></linearGradient>
+        <linearGradient id="gCase" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0" stop-color="#33343a"/><stop offset="1" stop-color="#0d0d10"/></linearGradient>
+        <linearGradient id="gChrome" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#f2f5f8"/><stop offset="0.45" stop-color="#aab1b9"/><stop offset="1" stop-color="#5c6268"/></linearGradient>
+        <radialGradient id="gKnob" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#fdfcf8"/><stop offset="0.6" stop-color="#e6e2d8"/><stop offset="1" stop-color="#b9b4a8"/></radialGradient>
+        <radialGradient id="gFace" cx="0.5" cy="0.35" r="0.8"><stop offset="0" stop-color="#f6efdd"/><stop offset="1" stop-color="#ded4bb"/></radialGradient>
+        <radialGradient id="gBrass" cx="0.36" cy="0.32" r="0.85">
+          <stop offset="0" stop-color="#f5e8c4"/>
+          <stop offset="0.32" stop-color="#ddc27c"/>
+          <stop offset="0.68" stop-color="#a8823f"/>
+          <stop offset="1" stop-color="#6f5327"/>
+        </radialGradient>
+        <filter id="knobBlur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>
+        <filter id="softShadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#000" flood-opacity="0.5"/></filter>
+        <filter id="glowRed" x="-120%" y="-120%" width="340%" height="340%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3"/><feColorMatrix type="saturate" values="0"/></filter>
+      </defs>
+
+      <rect width="1280" height="720" fill="#2b1a10"/>
+      <rect width="1280" height="720" filter="url(#grain)" opacity="0.10"/>
+
+      <g filter="url(#softShadow)">
+        <rect x="40" y="30" width="1200" height="660" rx="7" fill="url(#gPly)"/>
+        <rect x="40" y="30" width="1200" height="660" rx="7" fill="none" stroke="#8d7248" stroke-width="2"/>
+        <rect x="40" y="30" width="1200" height="660" rx="7" filter="url(#grain)" opacity="0.07"/>
+      </g>
+
+      <!-- input switch panel -->
+      <g>
+        <rect x="64" y="234" width="228" height="222" rx="4" fill="url(#gPanel)" stroke="#4a4c52"/>
+        <g id="switches"></g>
+        <text x="178" y="480" text-anchor="middle" font-family="Oswald, sans-serif" font-size="12" fill="#6d5836" letter-spacing="5">WEJŚCIA</text>
+      </g>
+
+      <g id="panels"></g>
+      <g id="meters"></g>
+      <g id="config"></g>
+
+      <!-- learned indicator -->
+      <g>
+        <rect x="1042" y="96" width="120" height="52" rx="4" fill="url(#gPanel)" stroke="#4a4c52"/>
+        <circle id="ledOut" cx="1074" cy="118" r="6" fill="#4a1310"/>
+        <circle id="ledErr" cx="1102" cy="118" r="6" fill="#4a1310"/>
+        <circle id="ledOk"  cx="1130" cy="118" r="6" fill="#11341a"/>
+        <text x="1074" y="136" text-anchor="middle" font-family="Oswald, sans-serif" font-size="7.5" fill="#8a9098" letter-spacing=".5">WYNIK</text>
+        <text x="1102" y="136" text-anchor="middle" font-family="Oswald, sans-serif" font-size="7.5" fill="#8a9098" letter-spacing=".5">BŁĄD</text>
+        <text x="1130" y="136" text-anchor="middle" font-family="Oswald, sans-serif" font-size="7.5" fill="#8a9098" letter-spacing=".5">OK</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="console">
+    <section class="card">
+      <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+      <h2>Training</h2>
+      <div class="gates" id="gates" role="group" aria-label="Target function">
+        <button data-gate="AND" aria-pressed="true">AND</button>
+        <button data-gate="OR" aria-pressed="false">OR</button>
+        <button data-gate="XOR" aria-pressed="false">XOR</button>
+        <button data-gate="XNOR" aria-pressed="false">XNOR</button>
+      </div>
+      <div class="gates rack" id="rack" role="group" aria-label="Hidden panels in use">
+        <span class="racklbl">Liczba ukrytych neuronów</span>
+        <button data-rack="1" aria-pressed="true">1</button>
+        <button data-rack="2" aria-pressed="false">2</button>
+      </div>
+      <div class="btnrow">
+        <button id="btnRun" class="primary">Run training</button>
+        <button id="btnStep">Present one case</button>
+        <button id="btnReset">Reset knobs</button>
+        <button id="btnRandom">Randomize</button>
+      </div>
+      <div class="field">
+        <label for="lr">Correction size · <span class="val" id="lrVal">5.0</span></label>
+        <input type="range" id="lr" min="1" max="20" step="0.5" value="5">
+      </div>
+      <div class="field">
+        <label for="speed">Bench speed · <span class="val" id="speedVal">1 pass per frame</span></label>
+        <input type="range" id="speed" min="1" max="5" step="1" value="3">
+      </div>
+      <label class="check"><input type="checkbox" id="autoRestart" checked> Spin the knobs and restart if a run stalls</label>
+      <div class="readouts">
+        <div class="ro"><span>PASS</span><b id="roPass">0</b></div>
+        <div class="ro"><span>ERROR</span><b id="roErr">—</b></div>
+        <div class="ro"><span>STATE</span><b id="roState">OFF</b></div>
+      </div>
+      <svg class="spark" id="spark" viewBox="0 0 260 52" preserveAspectRatio="none" aria-label="Error against passes"></svg>
+    </section>
+
+    <section class="card">
+      <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+      <h2><span id="gateName">AND</span> | tablica prawdy</h2>
+      <table>
+        <thead><tr><th>Przypadek</th><th>A</th><th>B</th><th>H₁ µA</th><th id="thHidden2">H₂ µA</th><th>Out µA</th><th>Fires</th><th>Want</th><th>&nbsp;</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="log" id="log" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+      <h2>What the bench sees</h2>
+      <div class="mapwrap">
+        <canvas id="map" width="72" height="72"></canvas>
+        <svg id="mapOverlay" viewBox="0 0 200 200"></svg>
+      </div>
+      <p class="note" id="mapNote">Shaded where the output neuron fires. The two dashed lines are the folds put in by <code>H₁</code> and <code>H₂</code> — each hidden neuron still draws only a straight line, and the third neuron combines them into a corner that no single line could cut.</p>
+    </section>
+  </div>
+<!--
+  <footer>
+    <p><b>Why the rule had to change</b><br>
+    On the single-neuron bench the correction was obvious: the meter was on the wrong side of zero, so back the knobs off. Here the hidden panels have no target of their own — nothing says what H₁ should have read. Backpropagation supplies one: it takes the output error, multiplies it by the output knob that carried each hidden signal, and hands that share back as the hidden neuron's own error. A knob that contributed more to the mistake gets turned further.</p>
+    <p style="margin-top:14px"><b>Why the meters have a soft knee</b><br>
+    A hard threshold gives no gradient — the error is flat everywhere and jumps at zero, so there is nothing to tell a knob which way to move. These neurons fade across roughly ±4 µA instead of snapping, which is what makes the corrections computable at all. The bench also keeps a little momentum in the shafts, so a run coasts through shallow flat spots rather than parking in them.</p>
+    <p style="margin-top:14px"><b>What switching a panel out actually does</b><br>
+    Nothing is unplugged. The four knobs that belong to panel 2 — its two input knobs, its bias, and <em>v₂</em> on the output panel — are wound to zero and held there, and backprop's corrections for those four are dropped on the floor. H₂ still reads a steady 50 µA, because a neuron with all its knobs at zero sits in the middle of its own knee, but <em>v₂ = 0</em> means none of that reading reaches the output. Switch the panel back in and its knobs return to wherever they were last left, corrections included.</p>
+    <p style="margin-top:14px"><b>One panel versus two</b><br>
+    With one panel the output is a single fold in the input plane: the output neuron can slide it, steepen it, or flip which side fires, but it cannot bend it. AND and OR are fine. XOR and XNOR are not. Three of the four cases is the ceiling, and the error stalls well short of zero while the bench keeps hunting. Switch panel 2 in and a second fold appears; the output neuron combines the two into a corner, and the same correction rule that was failing a moment ago solves it.</p>
+    <p style="margin-top:14px"><b>When two panels stall</b><br>
+    Two hidden neurons is the bare minimum for XOR, and roughly one start in five drops into a setting where every small turn of every knob makes things worse and the error stalls anyway. That is a real local minimum, not a bug — and it is worth telling apart from the one-panel case, where the stall is the floor rather than a trap. Randomize and run it again.</p>
+  </footer>
+-->
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const NS="http://www.w3.org/2000/svg";
+  const svg=document.getElementById("scene");
+  const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  const sig=x=>1/(1+Math.exp(-x));
+
+  /* ---------------- model ---------------- */
+  const LIMIT=20, KNEE=4, MOM=0.9;          // knob travel, soft-knee width in µA, shaft momentum
+  const START=[3.5,-4,2, -2.5,4,-4, 3,1.5,3];
+  const IDS=["w11","w21","b1","w12","w22","b2","v1","v2","b3"];
+  const GATES={AND:[0,0,0,1],OR:[0,1,1,1],XOR:[0,1,1,0],XNOR:[1,0,0,1]};
+  const CASES=[[0,0],[0,1],[1,0],[1,1]];
+
+  const W={}, VEL={};
+  IDS.forEach((id,i)=>{W[id]=START[i];VEL[id]=0;});
+
+  /* Panel 2 is never removed from the model — it is switched off by winding these
+     four knobs to zero and holding them there. h₂ still reads 0.5 on the bench,
+     but v₂=0 means none of it reaches the output neuron. */
+  const PANEL2=["w12","w22","b2","v2"];
+  const stash={};                                  // last live setting of panel 2
+  const isOff=id=>S.hidden===1 && PANEL2.indexOf(id)>=0;
+  const needsTwo=()=>S.gate==="XOR"||S.gate==="XNOR";
+
+  const S={x1:0,x2:0,gate:"AND",lr:5,speed:3,idx:0,pass:0,running:false,busy:false,hidden:1,
+           solved:false,autoRestart:true,history:[],bestErr:Infinity,sinceBest:0};
+
+  function forward(x1,x2,w){
+    w=w||W;
+    const z1=w.w11*x1+w.w21*x2+w.b1, h1=sig(z1/KNEE);
+    const z2=w.w12*x1+w.w22*x2+w.b2, h2=sig(z2/KNEE);
+    const zo=w.v1*h1+w.v2*h2+w.b3,   y=sig(zo/KNEE);
+    return {z1,h1,z2,h2,zo,y};
+  }
+  const target=i=>GATES[S.gate][i];
+
+  function gradients(i){
+    const [x1,x2]=CASES[i], t=target(i), f=forward(x1,x2);
+    const dOut=(f.y-t)*f.y*(1-f.y)/KNEE;               // error pushed back through the output knee
+    const g={v1:dOut*f.h1, v2:dOut*f.h2, b3:dOut};
+    const d1=dOut*W.v1*f.h1*(1-f.h1)/KNEE;             // each hidden neuron's share of the blame
+    const d2=dOut*W.v2*f.h2*(1-f.h2)/KNEE;
+    g.w11=d1*x1; g.w21=d1*x2; g.b1=d1;
+    g.w12=d2*x1; g.w22=d2*x2; g.b2=d2;
+    return {g,f,t,d1,d2,dOut};
+  }
+  function applyGrad(g,into){
+    const next={};
+    IDS.forEach(id=>{
+      if(isOff(id)){VEL[id]=0;next[id]=0;return;}   // offline panel takes no correction
+      VEL[id]=MOM*VEL[id]-S.lr*g[id];
+      next[id]=clamp(W[id]+VEL[id],-LIMIT,LIMIT);
+    });
+    if(into) Object.assign(into,next);
+    return next;
+  }
+  function meanError(){
+    let e=0;
+    CASES.forEach((c,i)=>{const y=forward(c[0],c[1]).y; e+=(y-target(i))**2;});
+    return e/4;
+  }
+  function allCorrect(){
+    return CASES.every((c,i)=>{
+      const y=forward(c[0],c[1]).y;
+      return (y>0.5?1:0)===target(i) && Math.abs(y-0.5)>0.15;
+    });
+  }
+
+  /* ---------------- layout ---------------- */
+  const KR=22, LR_=38;
+  const ang=v=>v/LIMIT*150;
+  const PANELS=[
+    {id:"h1",x:344,y:70,w:216,h:216,title:"UKRYTY NEURON H₁",
+     knobs:[{id:"w11",cap:"WEJŚCIE A"},{id:"w21",cap:"WEJŚCIE B"},{id:"b1",cap:"BIAS"}]},
+    {id:"h2",x:344,y:390,w:216,h:216,title:"UKRYTY NEURON H₂",
+     knobs:[{id:"w12",cap:"WEJŚCIE A"},{id:"w22",cap:"WEJŚCIE B"},{id:"b2",cap:"BIAS"}]},
+    {id:"out",x:750,y:240,w:216,h:216,title:"WYJŚCIOWY NEURON",
+     knobs:[{id:"v1",cap:"NEURON H₁"},{id:"v2",cap:"NEURON H₂"},{id:"b3",cap:"BIAS"}]}
+  ];
+  const KNOB={};
+  const panelLayer=document.getElementById("panels");
+
+  function svgEl(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+  const defs=svg.querySelector("defs");
+  function arcPoint(cx,cy,r,aDeg){const a=aDeg*Math.PI/180;return [cx+r*Math.sin(a), cy-r*Math.cos(a)];}
+  function arcPath(cx,cy,r,a0,a1){
+    const [x0,y0]=arcPoint(cx,cy,r,a0), [x1,y1]=arcPoint(cx,cy,r,a1);
+    const large=((a1-a0+360)%360)>180?1:0;
+    return `M${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;
+  }
+
+  PANELS.forEach(p=>{
+    const g=svgEl("g");
+    g.appendChild(svgEl("rect",{x:p.x,y:p.y,width:p.w,height:p.h,rx:4,fill:"url(#gPanel)",stroke:"#4a4c52"}));
+    [[p.x+10,p.y+10],[p.x+p.w-10,p.y+10],[p.x+10,p.y+p.h-10],[p.x+p.w-10,p.y+p.h-10]].forEach(([cx,cy])=>{
+      g.appendChild(svgEl("circle",{cx,cy,r:6,fill:"url(#gChrome)",stroke:"#4c5056","stroke-width":".8"}));
+    });
+    const label=svgEl("text",{x:p.x+p.w/2,y:p.y+p.h+26,"text-anchor":"middle",
+      "font-family":"Oswald, sans-serif","font-size":13,fill:"#6d5836","letter-spacing":4});
+    label.textContent=p.title; g.appendChild(label);
+    const spots=[[p.x+56,p.y+66],[p.x+160,p.y+66],[p.x+108,p.y+158]];
+    p.knobs.forEach((k,i)=>{ g.appendChild(makeKnob(k.id,k.cap,spots[i][0],spots[i][1])); });
+    panelLayer.appendChild(g);
+    p.node=g;
+  });
+
+  function makeKnob(id,cap,cx,cy){
+    const g=svgEl("g",{class:"knob-hit",tabindex:"0",role:"slider","aria-label":cap+" pokrętło, "+id,
+      "aria-valuemin":-LIMIT,"aria-valuemax":LIMIT});
+    [-20,-10,0,10,20].forEach(v=>{
+      const a=ang(v)*Math.PI/180;
+      const t=svgEl("text",{x:cx+LR_*Math.sin(a),y:cy-LR_*Math.cos(a)+4,"text-anchor":"middle",
+        "font-family":"Oswald, sans-serif","font-size":11.5,fill:"#e9e6df"});
+      t.textContent=v; g.appendChild(t);
+    });
+    for(let v=-20;v<=20;v+=2.5){
+      const a=ang(v)*Math.PI/180,r1=KR+5,r2=KR+(v%10===0?11:8);
+      g.appendChild(svgEl("line",{x1:cx+r1*Math.sin(a),y1:cy-r1*Math.cos(a),
+        x2:cx+r2*Math.sin(a),y2:cy-r2*Math.cos(a),stroke:"#8b9098","stroke-width":v%10===0?1.5:0.85}));
+    }
+    g.appendChild(svgEl("circle",{class:"focusring",cx,cy,r:KR+14,fill:"none",stroke:"#e8a33c","stroke-width":2}));
+
+    // soft diffuse shadow cast on the panel, blurred rather than mounted on a collar
+    g.appendChild(svgEl("ellipse",{cx:cx+3,cy:cy+6,rx:KR+3,ry:KR-2,fill:"#000",opacity:.42,filter:"url(#knobBlur)"}));
+
+    // ambient sheen: fixed relative to the panel, not the cap, since it's the room light, not the metal, moving
+    g.appendChild(svgEl("path",{d:arcPath(cx,cy,KR-0.5,-78,-8),fill:"none",stroke:"#fff6e0","stroke-width":2,
+      "stroke-linecap":"round",opacity:.55}));
+    g.appendChild(svgEl("path",{d:arcPath(cx,cy,KR-0.5,104,168),fill:"none",stroke:"#2a1e0c","stroke-width":2.4,
+      "stroke-linecap":"round",opacity:.4}));
+
+    // rotating cap: brushed metal disc, clipped to a circle so the brush strokes don't spill past the rim
+    const rot=svgEl("g");
+    const clipId="kclip-"+id;
+    const clip=svgEl("clipPath",{id:clipId});
+    clip.appendChild(svgEl("circle",{cx,cy,r:KR}));
+    defs.appendChild(clip);
+    const disc=svgEl("g",{"clip-path":`url(#${clipId})`});
+    disc.appendChild(svgEl("circle",{cx,cy,r:KR,fill:"url(#gBrass)"}));
+    // for(let i=0;i<64;i++){
+    //   const a=(i*360/64+ (i%2)*2.8)*Math.PI/180;
+    //   const r1=KR*0.12, r2=KR*(0.9+0.08*((i*7)%5)/5);
+    //   const light=i%3===0;
+    //   disc.appendChild(svgEl("line",{x1:cx+r1*Math.sin(a),y1:cy-r1*Math.cos(a),
+    //     x2:cx+r2*Math.sin(a),y2:cy-r2*Math.cos(a),
+    //     stroke:light?"#fbf1d4":"#5f4a24","stroke-width":.6,opacity:light?.30:.22}));
+    // }
+    rot.appendChild(disc);
+    // knurled rim: fine vertical grooves cut into the bevel, turning with the cap
+    for(let i=0;i<40;i++){
+      const a=i*9*Math.PI/180,r1=KR-0.5,r2=KR-3.2;
+      rot.appendChild(svgEl("line",{x1:cx+r1*Math.sin(a),y1:cy-r1*Math.cos(a),
+        x2:cx+r2*Math.sin(a),y2:cy-r2*Math.cos(a),stroke:"#4a3a1e","stroke-width":.8,opacity:.4}));
+    }
+    rot.appendChild(svgEl("circle",{cx,cy,r:KR,fill:"none",stroke:"#4a3a1e","stroke-width":1,opacity:.5}));
+    // routed pointer groove, engraved rather than painted on
+    const pa=Math.PI/180;
+    rot.appendChild(svgEl("line",{x1:cx+KR*0.32*Math.sin(0),y1:cy-KR*0.32*Math.cos(0),
+      x2:cx+(KR-4)*Math.sin(0),y2:cy-(KR-4)*Math.cos(0),stroke:"#3a2c14","stroke-width":2.2,"stroke-linecap":"round"}));
+    rot.appendChild(svgEl("line",{x1:cx-1+KR*0.32*Math.sin(0),y1:cy-KR*0.32*Math.cos(0),
+      x2:cx-1+(KR-4)*Math.sin(0),y2:cy-(KR-4)*Math.cos(0),stroke:"#f4e6bd","stroke-width":.7,opacity:.5}));
+    // small central hub where the shaft meets the cap
+    rot.appendChild(svgEl("circle",{cx,cy,r:3.2,fill:"#8a6c36"}));
+    rot.appendChild(svgEl("circle",{cx,cy,r:3.2,fill:"none",stroke:"#4a3a1e","stroke-width":.7}));
+    rot.appendChild(svgEl("circle",{cx:cx-0.9,cy:cy-0.9,r:1,fill:"#f5e8c4",opacity:.8}));
+    g.appendChild(rot);
+
+    const t=svgEl("text",{x:cx,y:cy+LR_+12,"text-anchor":"middle","font-family":"Oswald, sans-serif",
+      "font-size":10,fill:"#57585c","letter-spacing":1});
+    t.textContent=cap; g.appendChild(t);
+
+    KNOB[id]={node:g,rot,cx,cy};
+
+    let prev=0,startVal=0,accum=0;
+    const local=e=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());};
+    const angleAt=e=>{const p=local(e);return Math.atan2(p.x-cx,-(p.y-cy))*180/Math.PI;};
+    g.addEventListener("pointerdown",e=>{
+      if(isOff(id)){e.preventDefault();log(`That knob is on the offline panel — it is wound to zero and held. Switch the rack to <span class="hl">2</span> to free it.`);return;}
+      g.setPointerCapture(e.pointerId);prev=angleAt(e);startVal=W[id];accum=0;stopRun();e.preventDefault();});
+    g.addEventListener("pointermove",e=>{
+      if(!g.hasPointerCapture(e.pointerId))return;
+      const a=angleAt(e);let d=a-prev;if(d>180)d-=360;if(d<-180)d+=360;accum+=d;prev=a;
+      setKnob(id,clamp(startVal+accum/150*LIMIT,-LIMIT,LIMIT));VEL[id]=0;S.solved=false;render();
+    });
+    g.addEventListener("keydown",e=>{
+      if(isOff(id))return;
+      const s=e.shiftKey?0.25:1;
+      if(e.key==="ArrowRight"||e.key==="ArrowUp"){setKnob(id,clamp(W[id]+s,-LIMIT,LIMIT));render();e.preventDefault();}
+      if(e.key==="ArrowLeft"||e.key==="ArrowDown"){setKnob(id,clamp(W[id]-s,-LIMIT,LIMIT));render();e.preventDefault();}
+    });
+    return g;
+  }
+  function setKnob(id,v){
+    W[id]=v;
+    const k=KNOB[id];
+    k.rot.setAttribute("transform",`rotate(${ang(v)} ${k.cx} ${k.cy})`);
+    k.node.setAttribute("aria-valuenow",v.toFixed(1));
+  }
+
+  /* ---------------- switches ---------------- */
+  const SW=[
+    {id:"x1",cx:130,cy:345,label:"A"},
+    {id:"x2",cx:226,cy:345,label:"B"},
+  ];
+  const TW=22,TH=66,THUMB_H=26,MARGIN=4;   // track width/height, thumb height, inset margin
+  const swLayer=document.getElementById("switches");
+  SW.forEach(s=>{
+    const trackTop=s.cy-TH/2, trackBottom=s.cy+TH/2;
+    const yOn=trackTop+MARGIN, yOff=trackBottom-MARGIN-THUMB_H;
+    const g=svgEl("g",{class:"sw-hit",tabindex:"0",role:"switch","aria-label":"WEJŚCIE "+s.label});
+    g.appendChild(svgEl("rect",{class:"focusring",x:s.cx-TW/2-9,y:trackTop-9,width:TW+18,height:TH+18,rx:15,
+      fill:"none",stroke:"#e8a33c","stroke-width":2}));
+    g.insertAdjacentHTML("beforeend",`
+      <text id="lbl1-${s.id}" x="${s.cx}" y="${trackTop-7}" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="600" font-size="13" letter-spacing="1">1</text>
+      <text id="lbl0-${s.id}" x="${s.cx}" y="${trackBottom+22}" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="600" font-size="13" letter-spacing="1">0</text>
+      <text x="${s.cx}" y="${trackBottom+42}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="15" fill="#e9e6df">${s.label}</text>
+      <circle id="lamp-${s.id}" cx="${s.cx}" cy="${trackTop-30}" r="5.5" fill="#4a1310"/>
+      <rect x="${s.cx-TW/2}" y="${trackTop}" width="${TW}" height="${TH}" rx="${TW/2}" fill="#0c0c0e" stroke="#3d3f44"/>
+      <rect x="${s.cx-TW/2+2}" y="${trackTop+2}" width="${TW-4}" height="${TH-4}" rx="${TW/2-2}" fill="none" stroke="#000" stroke-width="1.4" opacity=".6"/>`);
+    const thumb=svgEl("g",{style:"transition:transform .16s cubic-bezier(.3,1.4,.5,1)"});
+    thumb.insertAdjacentHTML("beforeend",`
+      <rect id="thumbBody-${s.id}" x="${s.cx-TW/2+2}" y="${yOff}" width="${TW-4}" height="${THUMB_H}" rx="${(TW-4)/2}" fill="url(#gChrome)" stroke="#5b6167" stroke-width=".8"/>
+      <line x1="${s.cx-4}" y1="${yOff+THUMB_H/2}" x2="${s.cx+4}" y2="${yOff+THUMB_H/2}" stroke="#4c5056" stroke-width="1.4"/>`);
+    g.appendChild(thumb); swLayer.appendChild(g);
+    s.thumb=thumb; s.node=g; s.yOn=yOn; s.yOff=yOff;
+    const flip=()=>{stopRun();setInput(s.id,S[s.id]?0:1);S.idx=CASES.findIndex(c=>c[0]===S.x1&&c[1]===S.x2);render();}
+    const toggle=()=>{};
+    g.addEventListener("pointerdown",e=>{e.preventDefault(); flip();});
+    g.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();flip();}});
+  });
+  function setInput(id,v){
+    S[id]=v;
+    const s=SW.find(s=>s.id===id);
+    s.thumb.style.transform=`translateY(${(v?s.yOn:s.yOff)-s.yOff}px)`;
+    s.node.setAttribute("aria-checked",v?"true":"false");
+    document.getElementById("thumbBody-"+id).setAttribute("fill", v?"#ffb545":"url(#gChrome)");
+    document.getElementById("lamp-"+id).setAttribute("fill", v?"#ff9d2e":"#4a1310");
+    document.getElementById("lamp-"+id).setAttribute("filter", v?"url(#glowRed)":"none");
+    document.getElementById("lbl1-"+id).setAttribute("fill", v?"#ffb545":"#5c6067");
+    document.getElementById("lbl0-"+id).setAttribute("fill", v?"#5c6067":"#e9e6df");
+  }
+
+  /* ---------------- meters ---------------- */
+  const meterLayer=document.getElementById("meters");
+  const METERS=[];
+
+  function buildMeter(cfg){
+    const g=svgEl("g");
+    const {x,y,w,h,faceH,pivot,R,span,label,unit,ticks,numbers,brand}=cfg;
+    g.appendChild(svgEl("rect",{x,y,width:w,height:h,rx:cfg.rx||12,fill:"url(#gCase)",stroke:"#000","stroke-width":1.4}));
+    g.appendChild(svgEl("rect",{x:x+5,y:y+5,width:w-10,height:h-10,rx:(cfg.rx||12)-3,fill:"none",stroke:"#4c4e55"}));
+    g.appendChild(svgEl("rect",{x:x+8,y:y+10,width:w-16,height:faceH,rx:4,fill:"url(#gFace)",stroke:"#8f8a76"}));
+    const pt=(a,r)=>{const rad=a*Math.PI/180;return [pivot.x+r*Math.sin(rad),pivot.y-r*Math.cos(rad)];};
+    const a0=pt(-span,R),a1=pt(span,R);
+    g.insertAdjacentHTML("beforeend",`<path d="M${a0[0]} ${a0[1]} A ${R} ${R} 0 0 1 ${a1[0]} ${a1[1]}" fill="none" stroke="#2c2c2a" stroke-width="1.3"/>`);
+    if(cfg.min<0 && cfg.max>0){
+      const aw=cfg.arcW||2.6, rr=R-3;
+      const zero=pt(0,rr), pos=pt(span,rr), neg=pt(-span,rr);
+      g.insertAdjacentHTML("beforeend",`<path d="M${zero[0]} ${zero[1]} A ${rr} ${rr} 0 0 1 ${pos[0]} ${pos[1]}" fill="none" stroke="#c23b2c" stroke-width="${aw}" opacity=".8"/>`);
+      g.insertAdjacentHTML("beforeend",`<path d="M${neg[0]} ${neg[1]} A ${rr} ${rr} 0 0 1 ${zero[0]} ${zero[1]}" fill="none" stroke="#2f66c2" stroke-width="${aw}" opacity=".8"/>`);
+    }
+    for(let v=cfg.min;v<=cfg.max+1e-9;v+=ticks){
+      const a=(v-cfg.min)/(cfg.max-cfg.min)*2*span-span;
+      const major=numbers.some(n=>Math.abs(n-v)<1e-9);
+      const p1=pt(a,R),p2=pt(a,R-(major?13:7));
+      g.insertAdjacentHTML("beforeend",`<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" stroke="#26262a" stroke-width="${major?1.9:0.85}"/>`);
+      if(major){
+        const p3=pt(a,R-24);
+        g.insertAdjacentHTML("beforeend",`<text x="${p3[0]}" y="${p3[1]+4}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="${cfg.numSize||12}" fill="#26262a">${Math.abs(v)}</text>`);
+      }
+    }
+    g.insertAdjacentHTML("beforeend",
+      `<text x="${pivot.x}" y="${y+26}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="${cfg.capSize||9}" fill="#3a3a38" letter-spacing="2.5">${label}</text>
+       <text x="${pivot.x}" y="${pivot.y-R+(cfg.unitDy||44)}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="${cfg.unitSize||13}" fill="#2a2a28" letter-spacing="2">${unit}</text>`);
+    if(brand) g.insertAdjacentHTML("beforeend",
+      `<text x="${pivot.x}" y="${pivot.y-R+68}" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="14" fill="#4a4a45">${brand}</text>`);
+    const needle=svgEl("line",{x1:pivot.x,y1:pivot.y,x2:pivot.x,y2:pivot.y-R+cfg.needleGap,
+      stroke:"#1b1b1e","stroke-width":cfg.needleW||2.2,"stroke-linecap":"round"});
+    g.appendChild(needle);
+    g.appendChild(svgEl("circle",{cx:pivot.x,cy:pivot.y,r:cfg.hub||8,fill:"url(#gChrome)"}));
+    g.appendChild(svgEl("circle",{cx:pivot.x,cy:pivot.y,r:2.6,fill:"#3a3d42"}));
+    if(cfg.ribs){
+      for(let i=0;i<3;i++) g.appendChild(svgEl("rect",{x:pivot.x-63,y:y+h-52+i*10,width:126,height:4,rx:2,fill:"#0a0a0c",opacity:".8"}));
+      g.appendChild(svgEl("circle",{cx:pivot.x,cy:y+h-17,r:7,fill:"url(#gChrome)"}));
+      g.appendChild(svgEl("line",{x1:pivot.x-5,y1:y+h-17,x2:pivot.x+5,y2:y+h-17,stroke:"#4a4d52","stroke-width":1.6}));
+    }
+    const cap=svgEl("text",{x:pivot.x,y:y+h+26,"text-anchor":"middle","font-family":"Oswald, sans-serif",
+      "font-size":12,fill:"#6d5836","letter-spacing":4});
+    cap.textContent=cfg.caption; g.appendChild(cap);
+    meterLayer.appendChild(g);
+    const m={needle,pivot,span,min:cfg.min,max:cfg.max,value:cfg.value,angle:0,vel:0,group:g,cap};
+    METERS.push(m); return m;
+  }
+
+  const mH1=buildMeter({x:596,y:106,w:104,h:132,faceH:104,rx:8,pivot:{x:648,y:200},R:66,span:36,
+    min:-50,max:50,ticks:10,numbers:[-50,0,50],numSize:10,label:"",unit:"µA",unitSize:11,unitDy:40,
+    needleGap:4,needleW:1.8,hub:6,caption:"",value:()=>clamp(forward(S.x1,S.x2).z1,-53,53)});
+  const mH2=buildMeter({x:596,y:430,w:104,h:132,faceH:104,rx:8,pivot:{x:648,y:520},R:66,span:36,
+    min:-50,max:50,ticks:10,numbers:[-50,0,50],numSize:10,label:"",unit:"µA",unitSize:11,unitDy:40,
+    needleGap:4,needleW:1.8,hub:6,caption:"",value:()=>clamp(forward(S.x1,S.x2).z2,-53,53)});
+  const mOut=buildMeter({x:1000,y:212,w:220,h:276,faceH:186,rx:13,pivot:{x:1110,y:394},R:112,span:55,
+    min:-50,max:50,ticks:2,numbers:[-50,-40,-30,-20,-10,0,10,20,30,40,50],label:"",
+    unit:"µA",unitSize:14,unitDy:65,needleGap:6,ribs:true,arcW:3,
+    caption:"Wyjście = A XOR B",value:()=>clamp(forward(S.x1,S.x2).zo,-53,53)});
+
+  /* ---------------- hidden-rack selector ---------------- */
+  const cfgLayer=document.getElementById("config");
+  const RACK={x:728,y:56,w:214,h:172};
+  const RKX=835, RKY=142, RKR=26, DETENT={1:-42,2:42};
+  const rackNum={};
+  let rackRot,rackPlate,rackPlateBox,rackSwitch,stampGroup;
+
+  (function buildRack(){
+    const g=svgEl("g");
+    g.appendChild(svgEl("rect",{x:RACK.x,y:RACK.y,width:RACK.w,height:RACK.h,rx:4,fill:"url(#gPanel)",stroke:"#4a4c52"}));
+    [[RACK.x+10,RACK.y+10],[RACK.x+RACK.w-10,RACK.y+10],[RACK.x+10,RACK.y+RACK.h-10],[RACK.x+RACK.w-10,RACK.y+RACK.h-10]]
+      .forEach(([cx,cy])=>g.appendChild(svgEl("circle",{cx,cy,r:6,fill:"url(#gChrome)",stroke:"#4c5056","stroke-width":".8"})));
+
+    const title=svgEl("text",{x:RKX,y:RACK.y+26,"text-anchor":"middle","font-family":"Oswald, sans-serif",
+      "font-size":11,fill:"#8a9098","letter-spacing":3.4});
+    title.textContent="HIDDEN PANELS"; g.appendChild(title);
+
+    // const sel=svgEl("g",{class:"sw-hit",tabindex:"0",role:"switch","aria-label":"Second hidden panel"});
+    // sel.appendChild(svgEl("circle",{class:"focusring",cx:RKX,cy:RKY,r:RKR+30,fill:"none",stroke:"#e8a33c","stroke-width":2}));
+  
+    // // detent marks and the two numerals, which are click targets of their own
+    // [1,2].forEach(n=>{
+    //   const a=DETENT[n]*Math.PI/180;
+    //   g.appendChild(svgEl("line",{x1:RKX+(RKR+5)*Math.sin(a),y1:RKY-(RKR+5)*Math.cos(a),
+    //     x2:RKX+(RKR+12)*Math.sin(a),y2:RKY-(RKR+12)*Math.cos(a),stroke:"#8b9098","stroke-width":1.5}));
+    //   const num=svgEl("text",{x:RKX+50*Math.sin(a),y:RKY-50*Math.cos(a)+6,"text-anchor":"middle",
+    //     "font-family":"Oswald, sans-serif","font-weight":600,"font-size":17,fill:"#5c6067"});
+    //   num.textContent=n; g.appendChild(num); rackNum[n]=num;
+    //   const hit=svgEl("circle",{class:"sw-hit",cx:RKX+50*Math.sin(a),cy:RKY-50*Math.cos(a),r:16,fill:"transparent"});
+    //   hit.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();setRack(n);});
+    //   g.appendChild(hit);
+    // });
+
+    // sel.appendChild(svgEl("ellipse",{cx:RKX+3,cy:RKY+6,rx:RKR+3,ry:RKR-2,fill:"#000",opacity:.42,filter:"url(#knobBlur)"}));
+    // sel.appendChild(svgEl("path",{d:arcPath(RKX,RKY,RKR-0.5,-78,-8),fill:"none",stroke:"#fff6e0","stroke-width":2,"stroke-linecap":"round",opacity:.55}));
+
+    // rackRot=svgEl("g");
+    // rackRot.appendChild(svgEl("circle",{cx:RKX,cy:RKY,r:RKR,fill:"url(#gBrass)"}));
+    // for(let i=0;i<40;i++){
+    //   const a=i*9*Math.PI/180;
+    //   rackRot.appendChild(svgEl("line",{x1:RKX+(RKR-0.5)*Math.sin(a),y1:RKY-(RKR-0.5)*Math.cos(a),
+    //     x2:RKX+(RKR-3.2)*Math.sin(a),y2:RKY-(RKR-3.2)*Math.cos(a),stroke:"#4a3a1e","stroke-width":.8,opacity:.4}));
+    // }
+    // rackRot.appendChild(svgEl("circle",{cx:RKX,cy:RKY,r:RKR,fill:"none",stroke:"#4a3a1e","stroke-width":1,opacity:.5}));
+    // rackRot.appendChild(svgEl("line",{x1:RKX,y1:RKY-RKR*0.3,x2:RKX,y2:RKY-RKR+4,stroke:"#3a2c14","stroke-width":2.6,"stroke-linecap":"round"}));
+    // rackRot.appendChild(svgEl("line",{x1:RKX-1.1,y1:RKY-RKR*0.3,x2:RKX-1.1,y2:RKY-RKR+4,stroke:"#f4e6bd","stroke-width":.7,opacity:.5}));
+    // rackRot.appendChild(svgEl("circle",{cx:RKX,cy:RKY,r:3.4,fill:"#8a6c36",stroke:"#4a3a1e","stroke-width":.7}));
+    // rackRot.style.transition=reduced?"none":"transform .28s cubic-bezier(.3,1.5,.5,1)";
+    // rackRot.style.transformOrigin=`${RKX}px ${RKY}px`;
+    // sel.appendChild(rackRot);
+    // g.appendChild(sel);
+    // rackSwitch=sel;
+
+    // rackPlateBox=svgEl("rect",{x:752,y:192,width:166,height:26,rx:3,fill:"#0c0c0e",stroke:"#3a3c42"});
+    // g.appendChild(rackPlateBox);
+    // rackPlate=svgEl("text",{x:RKX,y:209,"text-anchor":"middle","font-family":"Oswald, sans-serif",
+    //   "font-size":10.5,fill:"#5ce07a","letter-spacing":2.4});
+    // g.appendChild(rackPlate);
+
+    // // stamp that sits over panel 2 when it is wound down
+    // stampGroup=svgEl("g",{opacity:0,style:"transition:opacity .3s"});
+    // stampGroup.appendChild(svgEl("rect",{x:352,y:398,width:200,height:200,rx:3,fill:"none",
+    //   stroke:"#e8a33c","stroke-width":1.2,"stroke-dasharray":"7 6",opacity:.5}));
+    // const placard=svgEl("g",{transform:"rotate(-2.5 452 498)"});
+    // placard.appendChild(svgEl("rect",{x:348,y:470,width:208,height:56,rx:3,fill:"#16150f",opacity:.94,
+    //   stroke:"#e8a33c","stroke-width":1.1}));
+    // [[358,480],[546,480],[358,516],[546,516]].forEach(([cx,cy])=>
+    //   placard.appendChild(svgEl("circle",{cx,cy,r:2.4,fill:"#8d949c",opacity:.7})));
+    // const st=svgEl("text",{x:452,y:498,"text-anchor":"middle","font-family":"Oswald, sans-serif",
+    //   "font-weight":600,"font-size":21,fill:"#e8a33c","letter-spacing":6});
+    // st.textContent="OFFLINE"; placard.appendChild(st);
+    // const st2=svgEl("text",{x:452,y:516,"text-anchor":"middle","font-family":"Oswald, sans-serif",
+    //   "font-size":9.5,fill:"#c9a878","letter-spacing":2.4});
+    // st2.textContent="KNOBS HELD AT ZERO"; placard.appendChild(st2);
+    // stampGroup.appendChild(placard);
+    // g.appendChild(stampGroup);
+
+    // const toggle=()=>setRack(S.hidden===1?2:1);
+    // sel.addEventListener("pointerdown",e=>{e.preventDefault();toggle();});
+    // sel.addEventListener("keydown",e=>{
+    //   if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle();}
+    //   if(e.key==="ArrowLeft"||e.key==="ArrowDown"){e.preventDefault();setRack(1);}
+    //   if(e.key==="ArrowRight"||e.key==="ArrowUp"){e.preventDefault();setRack(2);}
+    // });
+    // cfgLayer.appendChild(g);
+  })();
+
+  const panel1=PANELS.find(p=>p.id==="h1");
+  const panel2=PANELS.find(p=>p.id==="h2");
+  function updateRack(){
+    const on=S.hidden===2;
+    // rackRot.style.transform=`rotate(${DETENT[S.hidden]}deg)`;
+    // rackNum[1].setAttribute("fill",on?"#5c6067":"#ffb545");
+    // rackNum[2].setAttribute("fill",on?"#ffb545":"#5c6067");
+    // rackSwitch.setAttribute("aria-checked",on?"true":"false");
+    // rackPlate.textContent=on?"PANEL 2 ONLINE":"PANEL 2 OFFLINE";
+    // rackPlate.setAttribute("fill",on?"#5ce07a":"#8a9098");
+    // stampGroup.setAttribute("opacity",on?0:1);
+    if (S.hidden===1) {
+      panel1.node.style.transform=`translateY(170px)`;
+      panel2.node.style.transform=`translateY(170px)`;
+      document.getElementById("meters").children[0].style.transform=`translateY(170px)`;
+      document.getElementById("meters").children[1].setAttribute("opacity",0);
+    } else {
+      panel1.node.style.transform=`none`;
+      panel2.node.style.transform=`none`;
+      document.getElementById("meters").children[0].style.transform=`none`;
+      document.getElementById("meters").children[1].setAttribute("opacity",1);
+    }
+    panel2.node.setAttribute("opacity",on?1:0);
+    // // mH2.group.setAttribute("opacity",on?1:0);
+    KNOB.v2.node.setAttribute("opacity",on?1:.34);
+    PANEL2.forEach(id=>KNOB[id].node.setAttribute("aria-disabled",on?"false":"true"));
+    // document.getElementById("thHidden2").style.opacity=on?1:.4;
+    document.querySelectorAll("#rack button[data-rack]").forEach(b=>
+      b.setAttribute("aria-pressed",b.dataset.rack===String(S.hidden)?"true":"false"));
+    // document.getElementById("mapNote").innerHTML=on
+    //   ? 'Shaded where the output neuron fires. The two dashed lines are the folds put in by <code>H₁</code> and <code>H₂</code> — each hidden neuron still draws only a straight line, and the third neuron combines them into a corner that no single line could cut.'
+    //   : 'Shaded where the output neuron fires. One dashed line, because one panel is running. The output neuron can slide and steepen that single fold, but it cannot bend it, and XOR needs a bend.';
+  }
+
+  function setRack(n){
+    if(S.hidden===n||S.busy)return;
+    stopRun();
+    S.hidden=n; S.solved=false; S.bestErr=Infinity; S.sinceBest=0;
+    updateRack();
+    if(n===1){
+      PANEL2.forEach(id=>{stash[id]=W[id];VEL[id]=0;});
+      turnTo(Object.assign({},W,{w12:0,w22:0,b2:0,v2:0}),reduced?0:520).then(()=>{
+        PANEL2.forEach(id=>VEL[id]=0);render();
+      });
+      log(`Panel 2 switched out. Its four knobs are winding to zero and will be held there — <span class="hl">v₂ = 0</span> is the one that matters, since it is the knob that let H₂ reach the output. ${needsTwo()?`No setting of the five live knobs can do ${S.gate}.`:`${S.gate} only ever needed one panel.`}`);
+    }else{
+      const kept=PANEL2.some(id=>Math.abs(stash[id]||0)>0.05);
+      const back={};
+      PANEL2.forEach(id=>{back[id]=kept?stash[id]:Math.round((Math.random()*8-4)*2)/2;VEL[id]=0;});
+      turnTo(Object.assign({},W,back),reduced?0:520).then(render);
+      log(`Panel 2 back in. Its knobs ${kept?"return to where they were left":"start from a random spin"}, and corrections reach them again through <span class="hl">v₂</span>.`);
+    }
+  }
+
+  function meterAngle(m){
+    const v=clamp(m.value(),m.min,m.max);
+    return (v-m.min)/(m.max-m.min)*2*m.span-m.span;
+  }
+  (function tick(){
+    METERS.forEach(m=>{
+      const t=meterAngle(m);
+      if(reduced){m.angle=t;}
+      else{m.vel+=(t-m.angle)*0.055;m.vel*=0.80;m.angle+=m.vel;}
+      m.needle.setAttribute("transform",`rotate(${m.angle} ${m.pivot.x} ${m.pivot.y})`);
+    });
+    requestAnimationFrame(tick);
+  })();
+
+  /* ---------------- readouts ---------------- */
+  const ledOut=document.getElementById("ledOut"),ledErr=document.getElementById("ledErr"),ledOk=document.getElementById("ledOk");
+  const setLed=(el,on,c,d)=>{el.setAttribute("fill",on?c:d);el.setAttribute("filter",on?"url(#glowRed)":"none");};
+
+  const tbody=document.getElementById("tbody");
+  const rows=CASES.map(()=>{const tr=document.createElement("tr");
+    tr.innerHTML="<td></td>".repeat(9);tbody.appendChild(tr);return tr;});
+
+  const logEl=document.getElementById("log");
+  function log(html){const p=document.createElement("p");p.innerHTML=html;logEl.prepend(p);
+    while(logEl.children.length>8)logEl.lastChild.remove();}
+
+  const map=document.getElementById("map"),mctx=map.getContext("2d");
+  const overlay=document.getElementById("mapOverlay");
+  const P0=-0.6,P1=1.6;
+  const px=x=>(x-P0)/(P1-P0)*200, py=y=>200-(y-P0)/(P1-P0)*200;
+
+  function drawMap(){
+    const N=map.width, img=mctx.createImageData(N,N);
+    for(let j=0;j<N;j++){
+      const yv=P1-(j+0.5)/N*(P1-P0);
+      for(let i=0;i<N;i++){
+        const xv=P0+(i+0.5)/N*(P1-P0);
+        const y=forward(xv,yv).y, o=(j*N+i)*4;
+        img.data[o]=255;img.data[o+1]=59;img.data[o+2]=47;
+        img.data[o+3]=Math.round(y*118);
+      }
+    }
+    mctx.putImageData(img,0,0);
+
+    let h="";
+    for(const v of [0,1]){
+      h+=`<line x1="${px(v)}" y1="0" x2="${px(v)}" y2="200" stroke="#2a2c31"/>`;
+      h+=`<line x1="0" y1="${py(v)}" x2="200" y2="${py(v)}" stroke="#2a2c31"/>`;
+    }
+    const line=(a,b,c,col)=>{
+      if(Math.abs(b)>1e-6) return `<line x1="${px(P0)}" y1="${py(-(a*P0+c)/b)}" x2="${px(P1)}" y2="${py(-(a*P1+c)/b)}" stroke="${col}" stroke-width="1.4" stroke-dasharray="5 4" opacity=".85"/>`;
+      if(Math.abs(a)>1e-6) return `<line x1="${px(-c/a)}" y1="0" x2="${px(-c/a)}" y2="200" stroke="${col}" stroke-width="1.4" stroke-dasharray="5 4" opacity=".85"/>`;
+      return "";
+    };
+    h+=line(W.w11,W.w21,W.b1,"#7fc9ff");
+    if(S.hidden===2) h+=line(W.w12,W.w22,W.b2,"#c9a2ff");
+    CASES.forEach((c,i)=>{
+      const on=target(i)===1,cur=i===S.idx;
+      h+=`<circle cx="${px(c[0])}" cy="${py(c[1])}" r="${cur?7:5.5}" fill="${on?"#efe7d3":"#0c0c0e"}" stroke="${cur?"#e8a33c":"#efe7d3"}" stroke-width="1.8"/>`;
+    });
+    overlay.innerHTML=h;
+  }
+
+  const spark=document.getElementById("spark");
+  function drawSpark(){
+    const H=S.history;
+    if(!H.length){spark.innerHTML="";return;}
+    const n=H.length, step=260/Math.max(60,n-1);
+    const pts=H.map((e,i)=>`${(i*step).toFixed(1)},${(50-Math.min(1,e/0.28)*46).toFixed(1)}`).join(" ");
+    spark.innerHTML=`<line x1="0" y1="4" x2="260" y2="4" stroke="#2a2c31"/>
+      <polyline points="${pts}" fill="none" stroke="#e8a33c" stroke-width="1.6"/>
+      <text x="4" y="14" font-family="Oswald, sans-serif" font-size="8" fill="#7d848c">ERROR PER PASS</text>`;
+  }
+
+  function render(){
+    let ok=true;
+    CASES.forEach((c,i)=>{
+      const f=forward(c[0],c[1]),fires=f.y>0.5?1:0,t=target(i),good=fires===t;
+      if(!good)ok=false;
+      const td=rows[i].children;
+      td[0].textContent=""+(i+1);
+      td[1].textContent=c[0];td[2].textContent=c[1];
+      td[3].textContent=(f.h1*100).toFixed(0);
+      td[4].textContent=S.hidden===2?(f.h2*100).toFixed(0):"—";
+      td[5].textContent=(f.zo>0?"+":"")+f.zo.toFixed(1);
+      td[6].textContent=fires;td[7].textContent=t;
+      td[8].innerHTML=`<span class="mark ${good?"good":"bad"}">${good?"✓":"✕"}</span>`;
+      rows[i].classList.toggle("active",i===S.idx);
+    });
+    const live=forward(S.x1,S.x2);
+    setLed(ledOut,live.y>0.5,"#ff3b2f","#4a1310");
+    setLed(ledErr,!ok,"#ff3b2f","#4a1310");
+    setLed(ledOk,ok,"#5ce07a","#11341a");
+    document.getElementById("roPass").textContent=S.pass;
+    document.getElementById("roErr").textContent=meanError().toFixed(3);
+    const st=document.getElementById("roState");
+    st.textContent=ok?"WYTRENOWANY":(S.running?"RUN":"OFF");
+    st.classList.toggle("ok",ok);
+    document.getElementById("gateName").textContent=S.gate;
+    mOut.cap.textContent=`WYJŚCIE = A ${S.gate} B`;
+    drawMap();drawSpark();
+    return ok;
+  }
+
+  /* ---------------- animated single step ---------------- */
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  function turnTo(next,ms){
+    return new Promise(res=>{
+      if(reduced||ms<=0){IDS.forEach(id=>setKnob(id,next[id]));render();return res();}
+      const from={};IDS.forEach(id=>from[id]=W[id]);
+      const t0=performance.now();
+      (function frame(now){
+        const t=Math.min(1,(now-t0)/ms),e=t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+        IDS.forEach(id=>setKnob(id,from[id]+(next[id]-from[id])*e));
+        render();
+        t<1?requestAnimationFrame(frame):res();
+      })(t0);
+    });
+  }
+
+  async function stepOnce(){
+    if(S.busy)return;
+    S.busy=true;
+    const i=S.idx,c=CASES[i];
+    setInput("x1",c[0]);setInput("x2",c[1]);render();
+    await wait(420);
+    const {g,f,t,d1,d2}=gradients(i);
+    const fires=f.y>0.5?1:0;
+    const tag=`Case ${i+1} <span class="hl">(${c[0]},${c[1]})</span>`;
+    if(fires===t){
+      setLed(ledErr,false,"#ff3b2f","#4a1310");
+      const reads=S.hidden===2
+        ? `H₁ ${(f.h1*100).toFixed(0)} µA, H₂ ${(f.h2*100).toFixed(0)} µA`
+        : `H₁ ${(f.h1*100).toFixed(0)} µA`;
+      log(`${tag} · ${reads} → out ${f.zo.toFixed(1)} µA, fires ${fires}. Right answer; the knobs still creep because the knee is soft.`);
+    }else{
+      setLed(ledErr,true,"#ff3b2f","#4a1310");
+      const blame=Math.abs(d1)>Math.abs(d2)?"H₁":"H₂";
+      log(S.hidden===2
+        ? `${tag} · out ${f.zo.toFixed(1)} µA → ${fires}, wanted ${t}. Error sent back: <span class="hl">${blame}</span> carries most of the blame, so its panel turns furthest.`
+        : `${tag} · out ${f.zo.toFixed(1)} µA → ${fires}, wanted ${t}. Error sent back to <span class="hl">H₁</span> only — panel 2 is out, so there is nowhere else for the blame to go.`);
+    }
+    const next=applyGrad(g);
+    await turnTo(next,420);
+    setLed(ledErr,false,"#ff3b2f","#4a1310");
+    S.idx=(i+1)%4;
+    if(S.idx===0)endPass();
+    render();
+    S.busy=false;
+  }
+
+  function endPass(){
+    S.pass++;
+    const e=meanError();
+    S.history.push(e);
+    if(S.history.length>260)S.history.shift();
+    if(e<S.bestErr-1e-4){S.bestErr=e;S.sinceBest=0;}else S.sinceBest++;
+    if(allCorrect()&&!S.solved){
+      S.solved=true;
+      log(`<span class="hl">Pass ${S.pass} — all four cases on the right side of the threshold. ${S.gate} is learned.</span>`);
+    }
+  }
+
+  /* ---------------- fast run ---------------- */
+  let raf=null,lastFlip=0,dispCase=0,accum=0;
+  const RATES=[0.25,0.5,1,2,4];
+  function doPass(){
+    const order=[0,1,2,3].sort(()=>Math.random()-0.5);
+    order.forEach(i=>{
+      const {g}=gradients(i);
+      const next=applyGrad(g);
+      IDS.forEach(id=>setKnob(id,next[id]));
+    });
+    endPass();
+  }
+  function runFrame(now){
+    if(!S.running)return;
+    accum+=RATES[S.speed-1];
+    while(accum>=1){doPass();accum-=1;}
+    if(now-lastFlip>240){
+      lastFlip=now;dispCase=(dispCase+1)%4;S.idx=dispCase;
+      setInput("x1",CASES[dispCase][0]);setInput("x2",CASES[dispCase][1]);
+    }
+    render();
+    if(S.solved){stopRun();return;}
+    if(S.sinceBest>400){
+      if(S.hidden===1&&needsTwo()){
+        log(`Pass ${S.pass}: error parked at ${meanError().toFixed(3)} and staying there. This is not a bad start — with one hidden panel the output is a single fold, so no setting of the five live knobs can put ${S.gate}'s two ON cases on one side and the two OFF cases on the other. <span class="hl">Switch panel 2 back in.</span>`);
+        stopRun();return;
+      }
+      if(S.autoRestart){
+        log(`Pass ${S.pass}: error stuck at ${meanError().toFixed(3)} — no improvement in 400 passes, so this is a flat spot, not a slow climb. Spinning the knobs and starting over.`);
+        randomize(false);
+      }else{
+        log(`Pass ${S.pass}: error parked at ${meanError().toFixed(3)}. That's a local minimum — press Randomize to try a different start.`);
+        stopRun();return;
+      }
+    }
+    if(S.pass>4000){stopRun();log("Stopped after 4000 passes.");return;}
+    raf=requestAnimationFrame(runFrame);
+  }
+  function startRun(){
+    if(S.running||S.busy)return;
+    S.running=true;S.solved=false;S.bestErr=Infinity;S.sinceBest=0;
+    document.getElementById("btnRun").textContent="Stop";
+    raf=requestAnimationFrame(runFrame);render();
+  }
+  function stopRun(){
+    if(!S.running)return;
+    S.running=false;cancelAnimationFrame(raf);
+    document.getElementById("btnRun").textContent="Run training";
+    render();
+  }
+
+  function randomize(resetCounters=true){
+    IDS.forEach(id=>{setKnob(id,isOff(id)?0:Math.round((Math.random()*8-4)*2)/2);VEL[id]=0;});
+    if(S.hidden===1)PANEL2.forEach(id=>{stash[id]=Math.round((Math.random()*8-4)*2)/2;});
+    S.solved=false;S.bestErr=Infinity;S.sinceBest=0;
+    if(resetCounters){S.pass=0;S.history=[];}
+    render();
+  }
+
+  /* ---------------- controls ---------------- */
+  document.getElementById("btnRun").addEventListener("click",()=>S.running?stopRun():startRun());
+  document.getElementById("btnStep").addEventListener("click",()=>{stopRun();stepOnce();});
+  document.getElementById("btnReset").addEventListener("click",()=>{
+    stopRun();
+    IDS.forEach((id,i)=>{if(isOff(id))stash[id]=START[i];setKnob(id,isOff(id)?0:START[i]);VEL[id]=0;});
+    S.pass=0;S.idx=0;S.history=[];S.solved=false;S.bestErr=Infinity;S.sinceBest=0;
+    setInput("x1",0);setInput("x2",0);
+    log(S.hidden===2?"Knobs returned to the factory setting."
+      :"Live knobs returned to the factory setting. Panel 2 stays at zero while it is switched out.");render();
+  });
+  document.getElementById("btnRandom").addEventListener("click",()=>{
+    stopRun();randomize(true);log("Knobs spun to a random start.");
+  });
+  document.getElementById("lr").addEventListener("input",e=>{
+    S.lr=parseFloat(e.target.value);document.getElementById("lrVal").textContent=S.lr.toFixed(1);
+  });
+  document.getElementById("speed").addEventListener("input",e=>{
+    S.speed=parseInt(e.target.value,10);
+    document.getElementById("speedVal").textContent=
+      ["quarter pass per frame","half pass per frame","1 pass per frame","2 passes per frame","4 passes per frame"][S.speed-1];
+  });
+  document.getElementById("autoRestart").addEventListener("change",e=>{S.autoRestart=e.target.checked;});
+  document.getElementById("rack").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-rack]");if(!b)return;
+    setRack(parseInt(b.dataset.rack,10));
+  });
+  document.getElementById("gates").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-gate]");if(!b)return;
+    stopRun();
+    S.gate=b.dataset.gate;
+    [...e.currentTarget.children].forEach(el=>el.setAttribute("aria-pressed",el===b?"true":"false"));
+    S.pass=0;S.history=[];S.solved=false;S.bestErr=Infinity;S.sinceBest=0;
+    log(`Target changed to <span class="hl">${S.gate}</span>. ${needsTwo()
+      ? (S.hidden===2 ? "This one needs both hidden panels."
+                      : "This one needs both hidden panels, and panel 2 is switched out — three of the four cases is as far as the bench can get.")
+      : "One straight line does this one, so it goes through on either setting of the rack."}`);
+    render();
+  });
+
+  /* ---------------- boot ---------------- */
+  IDS.forEach((id,i)=>{setKnob(id,START[i]);if(PANEL2.indexOf(id)>=0)stash[id]=START[i];});
+  setInput("x1",0);setInput("x2",0);
+  updateRack();
+  log("Bench powered up with both hidden panels in. Press Run training, then take panel 2 out with the rack selector and try XOR again.");
+  render();
+})();
+</script>
+</body>
+</html>
