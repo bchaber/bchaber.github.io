@@ -1,0 +1,565 @@
+<title>Minimal Approximator</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:        #f3efe3;
+    --paper-raised: #fbf8ef;
+    --ink:          #241f17;
+    --ink-soft:     #6d6252;
+    --line:         #ddd2ba;
+    --line-strong:  #c7b99a;
+    --copper:       #b85a26;
+    --copper-ramp-a:#f0c294;
+    --copper-ramp-b:#8a3f16;
+    --focus:        #8a4a1f;
+    --track:        #e6dcc4;
+    --surface-gray: #d6d1c1;
+    --err-pos:      #b8382b;
+    --err-neg:      #2f6ea6;
+    --err-mid:      #ffffff;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:        #171310;
+      --paper-raised: #211b14;
+      --ink:          #f1e7d6;
+      --ink-soft:     #a5947c;
+      --line:         #3d3324;
+      --line-strong:  #55462f;
+      --copper:       #e08a4c;
+      --copper-ramp-a:#7a4522;
+      --copper-ramp-b:#f3b678;
+      --focus:        #f0a869;
+      --track:        #362c1e;
+      --surface-gray: #6e6858;
+      --err-pos:      #e2685a;
+      --err-neg:      #6fa8d8;
+      --err-mid:      #f2ede0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:        #171310;
+    --paper-raised: #211b14;
+    --ink:          #f1e7d6;
+    --ink-soft:     #a5947c;
+    --line:         #3d3324;
+    --line-strong:  #55462f;
+    --copper:       #e08a4c;
+    --copper-ramp-a:#7a4522;
+    --copper-ramp-b:#f3b678;
+    --focus:        #f0a869;
+    --track:        #362c1e;
+    --surface-gray: #6e6858;
+    --err-pos:      #e2685a;
+    --err-neg:      #6fa8d8;
+    --err-mid:      #f2ede0;
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  h1,h2,h3{ font-family:"IBM Plex Serif", Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, "SF Mono", monospace; font-variant-numeric: tabular-nums; }
+
+  .page{
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 28px 28px 40px;
+    display: grid;
+    grid-template-columns: 348px 1fr;
+    gap: 22px;
+  }
+  header.top{
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line-strong);
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  header.top .eyebrow{
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    font-size: 11px;
+    color: var(--copper);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  header.top h1{ font-size: 26px; font-weight: 600; }
+  header.top p{
+    max-width: 46ch;
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  header.top .spec{
+    text-align: right;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  header.top .spec b{ color: var(--ink); font-weight: 600; }
+
+  section.panel{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 18px 20px;
+  }
+
+  .rail{ display:flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  .netmap{ display:flex; justify-content:center; padding: 4px 0 10px; }
+
+  .panel h2{
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .panel h2 span.tag{
+    font-family:"IBM Plex Mono", monospace;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .panel .hint{ color: var(--ink-soft); font-size: 12px; margin: 2px 0 14px; }
+
+  .slider-row{
+    display: grid;
+    grid-template-columns: 20px 30px 1fr 52px;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+  }
+  .dot{ width: 9px; height: 9px; border-radius: 50%; justify-self: center; }
+  .slider-row label{ font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+
+  input[type=range]{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--track);
+    outline-offset: 4px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: var(--slider-color, var(--copper));
+    border: 2px solid var(--paper-raised);
+    box-shadow: 0 0 0 1px var(--slider-color, var(--copper));
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--slider-color, var(--copper));
+    border: 2px solid var(--paper-raised);
+    box-shadow: 0 0 0 1px var(--slider-color, var(--copper));
+    cursor: pointer;
+    border: none;
+  }
+  input[type=range]:focus-visible{ outline: 2px solid var(--focus); }
+
+  .val{ text-align: right; font-size: 12px; color: var(--ink); }
+
+  .bias-row{ margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+  button.reset{
+    margin-top: 14px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 500;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  button.reset:hover{ border-color: var(--copper); color: var(--copper); }
+  button.reset:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .readout{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--track);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+  }
+  .readout .label{ font-size: 11.5px; color: var(--ink-soft); }
+  .readout .value{ font-size: 15px; font-weight: 600; }
+
+  table.fixed{ width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  table.fixed th{
+    text-align: right;
+    color: var(--ink-soft);
+    font-weight: 500;
+    padding: 3px 4px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.fixed th:first-child, table.fixed td:first-child{ text-align: left; }
+  table.fixed td{ text-align: right; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+  table.fixed tr:last-child td{ border-bottom: none; }
+  table.fixed .nname{ display:flex; align-items:center; gap:6px; }
+
+  .plot-wrap{ min-width: 0; }
+  #surface{ width: 100%; height: 620px; }
+  .legend-row{
+    display:flex; flex-wrap: wrap; gap: 18px; margin-top: 10px; padding-top: 12px;
+    border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-soft);
+    align-items: center;
+  }
+  .legend-row .swatch{ display:inline-flex; align-items:center; gap:6px; }
+  .legend-row .chip{ width:10px; height:10px; border-radius: 2px; display:inline-block; }
+  .legend-row .ramp-chip{
+    width: 68px; height: 10px; border-radius: 5px; display:inline-block;
+    background: linear-gradient(90deg, var(--err-neg), var(--err-mid), var(--err-pos));
+    border: 1px solid var(--line-strong);
+  }
+  .legend-row .ramp-labels{ display:flex; justify-content:space-between; width:68px; font-family:"IBM Plex Mono",monospace; font-size:10px; }
+
+  footer.credit{
+    grid-column: 1 / -1;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  footer.credit code{
+    font-family:"IBM Plex Mono", monospace;
+    background: var(--track);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 900px){
+    .page{ grid-template-columns: 1fr; }
+    #surface{ height: 480px; }
+  }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Minimal Approximator · Hagan Smart Sensor</div>
+      <h1>Two inputs, ten swish units, one number out</h1>
+      <p>A 2&nbsp;→&nbsp;10&nbsp;(swish)&nbsp;→&nbsp;1&nbsp;(linear) network, fit by BFGS to a two&#8209;sensor calibration curve. Drag the output weights below — they're the last linear combination before the answer.</p>
+    </div>
+    <div class="spec">
+      trained on <b>57</b> / held out <b>10</b> of <b>67</b> readings<br>
+      final mean loss <b class="mono">0.00007</b> · R² <b class="mono">0.9998</b> &nbsp;·&nbsp; full-batch Adam, α=0.05, 5000 epochs
+    </div>
+  </header>
+
+  <div class="rail">
+    <section class="panel">
+      <div class="netmap" id="netmap"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Output layer <span class="tag">Wo · bo — tunable</span></h2>
+      <p class="hint">Each slider is how strongly hidden unit <em>h<sub>i</sub></em> votes on the final estimate.</p>
+      <div id="sliders"></div>
+      <div class="bias-row slider-row" style="grid-template-columns: 20px 30px 1fr 52px;">
+        <span class="dot" style="background:var(--ink-soft)"></span>
+        <label class="mono">bo</label>
+        <input type="range" id="bo-slider" min="-2" max="2" step="0.01">
+        <span class="val mono" id="bo-val"></span>
+      </div>
+      <button class="reset" id="reset-btn">Reset to trained weights</button>
+      <div class="readout">
+        <span class="label">mean loss over all 67 readings, ½Σ(y&minus;ŷ)²</span>
+        <span class="value mono" id="loss-val">–</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Hidden layer <span class="tag">Wh · bh — fixed</span></h2>
+      <p class="hint">Feature detectors set once during training; not adjustable here.</p>
+      <table class="fixed">
+        <thead><tr><th>unit</th><th>w(ν₁)</th><th>w(ν₂)</th><th>bias</th></tr></thead>
+        <tbody id="fixed-body"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <section class="panel plot-wrap">
+    <h2>Approximation surface <span class="tag" id="grid-tag">41 × 41 grid</span></h2>
+    <p class="hint">y = W<sub>o</sub>·swish(W<sub>h</sub>x + b<sub>h</sub>) + b<sub>o</sub>, evaluated over the normalized sensor plane.</p>
+    <div id="surface"></div>
+    <div class="legend-row">
+      <span class="swatch"><span class="chip" style="background:var(--surface-gray)"></span> network surface</span>
+      <span class="swatch">
+        <span>
+          <span class="ramp-chip"></span>
+          <span class="ramp-labels"><span>&minus;</span><span>0</span><span>+</span></span>
+        </span>
+        measured readings (67), colored by residual y&minus;ŷ
+      </span>
+    </div>
+  </section>
+
+  <footer class="credit">
+    Reference implementation: <code>minimal-approximator.jl</code> · dataset: <code>datasets/hagan_smart_sensor.jl</code> (Hagan case-study smart-sensor data, two-sensor calibration). Weights shown come from full-batch <b>Adam</b> (α=0.05, β₁=0.9, β₂=0.999, 5000 epochs, seed 0) — added and tried alongside the script's own optimizers. It beat full-batch BFGS run to convergence (mean loss 0.00007 vs. 0.00079) and both beat the script's stochastic BFGS default, <code>batch_size&nbsp;=&nbsp;1</code> (0.00735) — a ~100× spread across optimizer choices on the same architecture and data.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- trained parameters (real run: full-batch Adam, α=0.05, 5000 epochs, seed 0) ----
+  var WH = [0.06323714728142364,0.2232704664026357,0.921194812526153,2.9504485320907197,-0.01742900715422647,1.2806551990912567,-1.8354460415782505,-2.6490388453781533,0.014815924542102147,-0.37348055939236896,-1.066375733965931,1.0399696080853793,1.503067549961455,0.6212950613568781,-0.026755657062599632,0.4947499917431504,-0.1791789320293242,0.9322373487981784,-0.033439777662765964,-0.1357022916482162];
+  var BH = [0.19215979347267104,-0.7340343696094382,-0.45475572124068653,-2.07145168342735,-1.25335519269876,-0.2108475160256049,0.7912863336790226,0.2723052181307878,-1.2311595212708422,-0.29649029251918524];
+  var WO_TRAINED = [0.33929095350428656,1.479695962407715,-0.8947967964658896,1.5981582853620284,-0.6215485408251832,0.6325951861963285,1.190727467180054,-0.8793585294184558,-0.6943299794891046,-0.15709615713023645];
+  var BO_TRAINED = 0.8453489922127676;
+  var N = 10;
+
+  var NU1 = [-0.20269461077844309,-0.40718562874251496,-0.5688622754491017,-0.7868263473053893,-0.8625748502994012,-0.9838323353293413,-0.9988023952095808,-0.9994011976047904,-0.9997005988023953,-0.9970059880239521,-0.9961077844311377,-0.9925149700598802,-0.9925149700598802,-0.9916167664670659,-0.9832335329341317,-0.8344311377245509,-0.4622754491017964,-0.15269461077844304,-0.059281437125748515,0.15568862275449113,0.27245508982035926,0.3922155688622757,0.49401197604790426,0.5868263473053892,0.6347305389221558,0.6976047904191618,0.7335329341317367,0.7514970059880239,0.8053892215568863,0.8592814371257487,0.8982035928143712,0.9161676646706589,0.9311377245508983,0.9520958083832334,0.9670658682634732,0.9760479041916168,0.9820359281437128,0.9880239520958083,1.0,1.0,1.0,1.0,1.0,1.0,0.9970059880239521,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043,0.9940119760479043];
+  var NU2 = [0.9964061096136567,0.991913746630728,0.9914645103324349,0.9878706199460916,0.9811320754716981,0.9627133872416891,0.9168912848158133,0.8876909254267744,0.8486073674752921,0.8212039532794251,0.7776280323450133,0.7398921832884098,0.693171608265948,0.6536388140161726,0.5871518418688231,0.5399820305480683,0.4627133872416891,0.36747529200359397,0.31805929919137466,0.20395327942497765,0.11545372866127579,-0.010781671159029615,-0.17070979335130276,-0.3679245283018868,-0.5004492362982929,-0.711141060197664,-0.898921832884097,-0.9528301886792453,-0.9550763701707098,-0.9654088050314465,-0.9649595687331536,-0.9690026954177897,-0.9690026954177897,-0.9690026954177897,-0.9640610961365679,-0.9591194968553459,-0.9577717879604672,-0.9501347708894878,-0.912848158131177,-0.8679245283018868,-0.8131176999101528,-0.7264150943396226,-0.6473495058400718,-0.4925876010781671,-0.3966756513926325,-0.305256064690027,-0.18733153638814015,-0.07547169811320764,0.014824797843665749,0.07637017070979324,0.1437556154537285,0.22955974842767302,0.3283917340521114,0.38319856244384565,0.4546271338724168,0.5049415992812221,0.5849056603773586,0.6658580413297395,0.7157232704402516,0.7584905660377359,0.825247079964061,0.8580413297394429,0.8845462713387242,0.922731356693621,0.9618149146451034,0.9842767295597483,1.0];
+  var Y   = [0.0,0.064,0.111,0.177,0.2,0.263,0.324,0.358,0.402,0.434,0.48,0.521,0.572,0.611,0.668,0.703,0.752,0.806,0.825,0.876,0.911,0.955,1.005,1.058,1.092,1.145,1.197,1.218,1.269,1.349,1.425,1.47,1.502,1.56,1.609,1.64,1.67,1.696,1.73,1.769,1.786,1.81,1.833,1.886,1.921,1.958,1.994,2.044,2.086,2.119,2.154,2.202,2.258,2.287,2.329,2.36,2.406,2.459,2.496,2.53,2.588,2.617,2.644,2.684,2.733,2.775,2.825];
+
+  var state = { wo: WO_TRAINED.slice(), bo: BO_TRAINED };
+
+  function swish(x){ return x / (1 + Math.exp(-x)); }
+
+  function netOutput(nu1, nu2, wo, bo){
+    var out = bo;
+    for (var i = 0; i < N; i++){
+      var pre = WH[i]*nu1 + WH[N+i]*nu2 + BH[i];
+      out += wo[i] * swish(pre);
+    }
+    return out;
+  }
+
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  function lerpHex(a, b, t){
+    function h2r(h){ h = h.replace('#',''); return [parseInt(h.substr(0,2),16), parseInt(h.substr(2,2),16), parseInt(h.substr(4,2),16)]; }
+    var A = h2r(a), B = h2r(b);
+    var r = Math.round(A[0]+(B[0]-A[0])*t), g = Math.round(A[1]+(B[1]-A[1])*t), bl = Math.round(A[2]+(B[2]-A[2])*t);
+    return 'rgb(' + r + ',' + g + ',' + bl + ')';
+  }
+
+  // ---- build ramp colors linking slider rows <-> fixed-weight table rows ----
+  var ramp = [];
+  (function(){
+    var a = css('--copper-ramp-a'), b = css('--copper-ramp-b');
+    for (var i = 0; i < N; i++) ramp.push(lerpHex(a, b, i/(N-1)));
+  })();
+
+  // ---- network map svg ----
+  (function(){
+    var w = 300, h = 150;
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('viewBox','0 0 ' + w + ' ' + h);
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    var inX = 30, hidX = 150, outX = 270;
+    var inY = [55, 95], hidY = [], outY = [75];
+    for (var i=0;i<N;i++) hidY.push(12 + i*(h-24)/(N-1));
+    function line(x1,y1,x2,y2,color,width){
+      var l = document.createElementNS(svgNS,'line');
+      l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+      l.setAttribute('stroke', color); l.setAttribute('stroke-width', width||1); l.setAttribute('opacity','0.55');
+      svg.appendChild(l);
+    }
+    function circle(x,y,r,fill,stroke){
+      var c = document.createElementNS(svgNS,'circle');
+      c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',r);
+      c.setAttribute('fill', fill); if(stroke){ c.setAttribute('stroke', stroke); c.setAttribute('stroke-width','1.2'); }
+      svg.appendChild(c);
+    }
+    var lineColor = css('--line-strong');
+    for (var a=0;a<inY.length;a++) for (var bIdx=0;bIdx<N;bIdx++) line(inX,inY[a],hidX,hidY[bIdx],lineColor);
+    for (var bIdx2=0;bIdx2<N;bIdx2++) line(hidX,hidY[bIdx2],outX,outY[0],ramp[bIdx2],2);
+    inY.forEach(function(y){ circle(inX,y,7,css('--paper-raised'),css('--ink-soft')); });
+    hidY.forEach(function(y,i){ circle(hidX,y,5.5,ramp[i]); });
+    circle(outX,outY[0],8,css('--paper-raised'),css('--ink'));
+    document.getElementById('netmap').appendChild(svg);
+    var cap = document.createElement('div');
+    cap.style.cssText = 'text-align:center;font-size:11px;color:var(--ink-soft);margin-top:-6px;font-family:"IBM Plex Mono",monospace;';
+    cap.textContent = 'ν₁, ν₂ → 10× swish → y';
+    document.getElementById('netmap').appendChild(cap);
+  })();
+
+  // ---- sliders ----
+  var slidersEl = document.getElementById('sliders');
+  var sliderEls = [];
+  for (var i = 0; i < N; i++){
+    (function(i){
+      var row = document.createElement('div');
+      row.className = 'slider-row';
+      row.innerHTML =
+        '<span class="dot" style="background:'+ramp[i]+'"></span>' +
+        '<label class="mono">h<sub>'+(i+1)+'</sub></label>' +
+        '<input type="range" min="-4" max="4" step="0.01" style="--slider-color:'+ramp[i]+'">' +
+        '<span class="val mono"></span>';
+      slidersEl.appendChild(row);
+      var input = row.querySelector('input');
+      var val = row.querySelector('.val');
+      input.value = state.wo[i];
+      val.textContent = state.wo[i].toFixed(2);
+      input.addEventListener('input', function(){
+        state.wo[i] = parseFloat(input.value);
+        val.textContent = state.wo[i].toFixed(2);
+        update();
+      });
+      sliderEls.push({input:input, val:val});
+    })(i);
+  }
+  var boSlider = document.getElementById('bo-slider');
+  var boVal = document.getElementById('bo-val');
+  boSlider.value = state.bo;
+  boVal.textContent = state.bo.toFixed(2);
+  boSlider.addEventListener('input', function(){
+    state.bo = parseFloat(boSlider.value);
+    boVal.textContent = state.bo.toFixed(2);
+    update();
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    state.wo = WO_TRAINED.slice();
+    state.bo = BO_TRAINED;
+    sliderEls.forEach(function(s, i){ s.input.value = state.wo[i]; s.val.textContent = state.wo[i].toFixed(2); });
+    boSlider.value = state.bo; boVal.textContent = state.bo.toFixed(2);
+    update();
+  });
+
+  // ---- fixed hidden-layer table ----
+  var body = document.getElementById('fixed-body');
+  for (var i2 = 0; i2 < N; i2++){
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><span class="nname"><span class="dot" style="background:'+ramp[i2]+'"></span> h<sub>'+(i2+1)+'</sub></span></td>' +
+      '<td class="mono">'+WH[i2].toFixed(2)+'</td>' +
+      '<td class="mono">'+WH[N+i2].toFixed(2)+'</td>' +
+      '<td class="mono">'+BH[i2].toFixed(2)+'</td>';
+    body.appendChild(tr);
+  }
+
+  // ---- 3d surface ----
+  var GRID = 41;
+  var lo = -1.05, hi = 1.05;
+  var xs = [], ys = [];
+  for (var g = 0; g < GRID; g++){ xs.push(lo + (hi-lo)*g/(GRID-1)); ys.push(lo + (hi-lo)*g/(GRID-1)); }
+
+  function computeZ(){
+    var z = [];
+    for (var yi = 0; yi < GRID; yi++){
+      var row = [];
+      for (var xi = 0; xi < GRID; xi++) row.push(netOutput(xs[xi], ys[yi], state.wo, state.bo));
+      z.push(row);
+    }
+    return z;
+  }
+
+  // residual[k] = measured y − network prediction, at each of the 67 sensor readings
+  function computeResiduals(){
+    var r = [];
+    for (var k = 0; k < Y.length; k++) r.push(Y[k] - netOutput(NU1[k], NU2[k], state.wo, state.bo));
+    return r;
+  }
+
+  var plotted = false;
+  function layoutColors(){
+    return {
+      paper: css('--paper-raised'),
+      ink: css('--ink'),
+      inkSoft: css('--ink-soft'),
+      line: css('--line')
+    };
+  }
+
+  function draw(){
+    var c = layoutColors();
+    var gray = css('--surface-gray');
+    var residuals = computeResiduals();
+    var maxAbsResidual = Math.max(1e-6, Math.max.apply(null, residuals.map(Math.abs)));
+    var surfaceTrace = {
+      type: 'surface',
+      x: xs, y: ys, z: computeZ(),
+      colorscale: [[0, gray], [1, gray]],
+      showscale: false,
+      opacity: 0.92,
+      contours: { z: { show: false } },
+      lighting: { ambient: 0.75, diffuse: 0.45, specular: 0.1, roughness: 0.7 },
+      hovertemplate: 'ν₁ %{x:.2f}<br>ν₂ %{y:.2f}<br>ŷ %{z:.3f}<extra></extra>'
+    };
+    var dataTrace = {
+      type: 'scatter3d', mode: 'markers',
+      x: NU1, y: NU2, z: Y,
+      marker: {
+        size: 4,
+        color: residuals,
+        colorscale: [[0, css('--err-neg')], [0.5, css('--err-mid')], [1, css('--err-pos')]],
+        cmid: 0, cmin: -maxAbsResidual, cmax: maxAbsResidual,
+        line: { color: c.ink, width: 1 }
+      },
+      customdata: residuals,
+      hovertemplate: 'ν₁ %{x:.2f}<br>ν₂ %{y:.2f}<br>y %{z:.3f}<br>residual %{customdata:+.3f}<extra>measured</extra>'
+    };
+    var layout = {
+      margin: { l: 0, r: 0, t: 0, b: 0 },
+      paper_bgcolor: c.paper,
+      scene: {
+        bgcolor: c.paper,
+        xaxis: { title: 'ν₁', color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
+        yaxis: { title: 'ν₂', color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
+        zaxis: { title: 'y', color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
+        camera: { eye: { x: 1.55, y: -1.65, z: 0.85 } }
+      },
+      font: { family: 'IBM Plex Sans, sans-serif', color: c.ink, size: 11 }
+    };
+    Plotly.react('surface', [surfaceTrace, dataTrace], layout, { displayModeBar: false, responsive: true });
+    plotted = true;
+  }
+
+  function update(){
+    var residuals = computeResiduals();
+    if (!plotted){ draw(); }
+    else {
+      var maxAbsResidual = Math.max(1e-6, Math.max.apply(null, residuals.map(Math.abs)));
+      Plotly.restyle('surface', { z: [computeZ()] }, [0]);
+      Plotly.restyle('surface', {
+        'marker.color': [residuals],
+        'marker.cmin': [-maxAbsResidual],
+        'marker.cmax': [maxAbsResidual],
+        customdata: [residuals]
+      }, [1]);
+    }
+    var sse = 0;
+    for (var k = 0; k < residuals.length; k++) sse += 0.5 * residuals[k] * residuals[k];
+    document.getElementById('loss-val').textContent = (sse/residuals.length).toFixed(5);
+  }
+
+  draw();
+  update();
+
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  mq.addEventListener && mq.addEventListener('change', function(){ plotted = false; draw(); update(); });
+})();
+</script>

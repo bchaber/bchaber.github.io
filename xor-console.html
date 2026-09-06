@@ -1,0 +1,802 @@
+<title>XOR Console</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:        #f3efe3;
+    --paper-raised: #fbf8ef;
+    --ink:          #241f17;
+    --ink-soft:     #6d6252;
+    --line:         #ddd2ba;
+    --line-strong:  #c7b99a;
+    --copper:       #b85a26;
+    --copper-glow:  rgba(184,90,38,.45);
+    --copper-ramp-a:#f0c294;
+    --copper-ramp-b:#8a3f16;
+    --brass:        #c9a25a;
+    --brass-hi:     #f1e0ac;
+    --focus:        #8a4a1f;
+    --track:        #e6dcc4;
+    --surface-gray: #d6d1c1;
+    --err-pos:      #b8382b;
+    --err-neg:      #2f6ea6;
+    --err-mid:      #ffffff;
+    --good:         #2f7a52;
+    --bad:          #b8382b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:        #171310;
+      --paper-raised: #211b14;
+      --ink:          #f1e7d6;
+      --ink-soft:     #a5947c;
+      --line:         #3d3324;
+      --line-strong:  #55462f;
+      --copper:       #e08a4c;
+      --copper-glow:  rgba(224,138,76,.5);
+      --copper-ramp-a:#7a4522;
+      --copper-ramp-b:#f3b678;
+      --brass:        #8a7238;
+      --brass-hi:     #cdb06a;
+      --focus:        #f0a869;
+      --track:        #362c1e;
+      --surface-gray: #6e6858;
+      --err-pos:      #e2685a;
+      --err-neg:      #6fa8d8;
+      --err-mid:      #f2ede0;
+      --good:         #5fbf8c;
+      --bad:          #e2685a;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:        #171310;
+    --paper-raised: #211b14;
+    --ink:          #f1e7d6;
+    --ink-soft:     #a5947c;
+    --line:         #3d3324;
+    --line-strong:  #55462f;
+    --copper:       #e08a4c;
+    --copper-glow:  rgba(224,138,76,.5);
+    --copper-ramp-a:#7a4522;
+    --copper-ramp-b:#f3b678;
+    --brass:        #8a7238;
+    --brass-hi:     #cdb06a;
+    --focus:        #f0a869;
+    --track:        #362c1e;
+    --surface-gray: #6e6858;
+    --err-pos:      #e2685a;
+    --err-neg:      #6fa8d8;
+    --err-mid:      #f2ede0;
+    --good:         #5fbf8c;
+    --bad:          #e2685a;
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  h1,h2,h3{ font-family:"IBM Plex Serif", Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, "SF Mono", monospace; font-variant-numeric: tabular-nums; }
+
+  .page{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 28px 40px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 22px;
+  }
+  header.top{
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line-strong); margin-bottom: 4px;
+  }
+  header.top .eyebrow{
+    text-transform: uppercase; letter-spacing: .09em; font-size: 11px; color: var(--copper); font-weight: 600; margin-bottom: 6px;
+  }
+  header.top h1{ font-size: 26px; font-weight: 600; }
+  header.top p{ max-width: 48ch; color: var(--ink-soft); font-size: 13px; margin-top: 6px; }
+  header.top .spec{ text-align: right; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  header.top .spec b{ color: var(--ink); font-weight: 600; }
+
+  section.panel{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 18px 20px;
+  }
+  .rail{ display:flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .panel h2{
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px;
+  }
+  .panel h2 span.tag{
+    font-family:"IBM Plex Mono", monospace; text-transform: none; letter-spacing: 0; font-size: 11px;
+    color: var(--ink-soft); font-weight: 500;
+  }
+  .panel .hint{ color: var(--ink-soft); font-size: 12px; margin: 2px 0 14px; }
+
+  /* ---- network diagram (LEDs, faint structural connections only) ---- */
+  .network-diagram{ position:relative; display:flex; justify-content:space-around; align-items:center; padding: 6px 0 4px; }
+  .net-wires{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .net-wires line{ stroke: var(--line-strong); stroke-width:1; opacity:.6; }
+  .net-col{ position:relative; display:flex; flex-direction:column; gap:18px; align-items:center; }
+  .led-node{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .led-lamp{
+    width:34px; height:34px; border-radius:50%;
+    background: var(--track);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.18);
+    transition: box-shadow .1s;
+  }
+  .led-lamp.clickable{ cursor:pointer; }
+  .led-lamp.clickable:hover{ box-shadow: 0 0 0 2px var(--copper), inset 0 1px 3px rgba(0,0,0,.18); }
+  .led-lamp.clickable:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .led-label{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-soft); font-weight:500; }
+  .led-value{ font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink); }
+
+  /* ---- knobs, grouped tight by neuron ---- */
+  .knob-clusters{ display:flex; flex-direction:column; gap:14px; }
+  .knob-cluster h3{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color: var(--copper); margin:0 0 8px; font-weight:600;
+  }
+  .knob-row{ display:flex; gap:10px; }
+  .knob-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px; width:52px; }
+  .knob-housing{
+    width:46px; height:46px; border-radius:50%;
+    background:var(--track);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.16), inset 0 -1px 1px rgba(255,255,255,.35);
+    position:relative; display:flex; align-items:center; justify-content:center;
+  }
+  .knob-tick{
+    position:absolute; top:50%; left:50%; width:2px; height:5px; background:var(--line-strong);
+    transform-origin:50% 21px; margin:-21px 0 0 -1px;
+  }
+  .knob-dial{
+    width:34px; height:34px; border-radius:50%;
+    background: radial-gradient(circle at 35% 28%, var(--brass-hi), var(--brass) 60%, var(--copper-ramp-b) 100%);
+    box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.55), inset 0 -1px 2px rgba(0,0,0,.3);
+    position:relative; cursor:ns-resize; touch-action:none; transition: box-shadow .12s;
+  }
+  .knob-dial.active{ box-shadow: 0 0 0 3px var(--copper-glow), 0 1px 2px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.55), inset 0 -1px 2px rgba(0,0,0,.3); }
+  .knob-dial:focus-visible{ outline:2px solid var(--focus); outline-offset:3px; }
+  .knob-pointer{
+    position:absolute; top:9%; left:50%; width:3px; height:11px; margin-left:-1.5px; border-radius:2px;
+    background:var(--copper);
+  }
+  .knob-value{ font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--ink-soft); }
+  .knob-dial.locked{ opacity:.35; cursor:not-allowed; pointer-events:none; }
+
+  .lock-toggle{
+    display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-soft);
+    margin-top:10px; cursor:pointer; user-select:none;
+  }
+  .lock-toggle input{ accent-color: var(--copper); width:14px; height:14px; cursor:pointer; }
+
+  .gate-switch{ display:flex; gap:6px; margin-bottom:12px; }
+  .gate-switch button.gate-btn{ flex:1; padding:6px 4px; font-size:11px; }
+
+  .transport{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+  button.reset{
+    padding: 9px 12px; border-radius:7px; border:1px solid var(--line-strong); background:transparent; color:var(--ink);
+    font:inherit; font-weight:500; font-size:12px; cursor:pointer; flex: 1 1 auto;
+  }
+  button.reset:hover{ border-color: var(--copper); color: var(--copper); }
+  button.reset:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  button.reset.is-active{ background:var(--copper); color:var(--paper-raised); border-color:var(--copper); }
+
+  .readout{
+    display:flex; align-items:center; justify-content:space-between; background:var(--track);
+    border-radius:8px; padding:10px 12px; margin-top:12px;
+  }
+  .readout .label{ font-size:11.5px; color:var(--ink-soft); }
+  .readout .value{ font-size:15px; font-weight:600; }
+  .train-status{ font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft); margin-top:8px; min-height:1.4em; }
+
+  /* ---- truth table ---- */
+  table.truth{ width:100%; border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:11.5px; }
+  table.truth th{ text-align:right; color:var(--ink-soft); font-weight:500; padding:3px 4px 6px; border-bottom:1px solid var(--line); }
+  table.truth th:first-child, table.truth td:first-child{ text-align:left; }
+  table.truth td{ text-align:right; padding:5px; border-bottom:1px solid var(--line); }
+  table.truth tr:last-child td{ border-bottom:none; }
+  .status-chip{ display:inline-block; width:8px; height:8px; border-radius:50%; }
+
+  /* ---- plot ---- */
+  .plot-wrap{ min-width: 0; }
+  #xor-surface{ width:100%; height:560px; }
+  .legend-row{
+    display:flex; gap:18px; margin-top:10px; padding-top:12px; border-top:1px solid var(--line);
+    font-size:12px; color:var(--ink-soft); flex-wrap:wrap; align-items:center;
+  }
+  .legend-row .swatch{ display:inline-flex; align-items:center; gap:6px; }
+  .legend-row .chip{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .legend-bar{ width:80px; height:8px; border-radius:4px; background:linear-gradient(90deg, var(--err-neg), var(--err-mid), var(--err-pos)); border:1px solid var(--line-strong); }
+
+  footer.credit{
+    grid-column: 1 / -1; color: var(--ink-soft); font-size: 11.5px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line);
+  }
+  footer.credit code{ font-family:"IBM Plex Mono", monospace; background: var(--track); padding: 1px 5px; border-radius: 4px; }
+
+  @media (max-width: 900px){
+    .page{ grid-template-columns: 1fr; }
+    #xor-surface{ height: 440px; }
+  }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Two Neurons · One Gate</div>
+      <h1>One straight line can't solve XOR</h1>
+      <p>Turn the nine weight knobs by hand — grouped tight, one cluster per neuron — and watch h₁, h₂ and ŷ light up for whichever input you're testing. Or hit <b class="mono" style="color:var(--copper)">Train</b> and let gradient descent find a setting on its own.</p>
+    </div>
+    <div class="spec">
+      architecture <b>2 → 2 → 1</b>, sigmoid throughout<br>
+      9 weights, 4 truth-table rows
+    </div>
+  </header>
+
+  <div class="rail">
+    <section class="panel">
+      <h2>Network <span class="tag">live response</span></h2>
+      <p class="hint">Click x₁ or x₂ to try an input — h₁, h₂ and ŷ are real LEDs, brightness = activation.</p>
+      <div class="network-diagram" id="network-diagram">
+        <svg class="net-wires" id="net-wires"></svg>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Weights <span class="tag">all 9 tunable</span></h2>
+      <p class="hint">Each knob is one weight; clusters group the two hidden neurons and the output neuron.</p>
+      <div class="knob-clusters" id="knob-clusters"></div>
+      <label class="lock-toggle"><input type="checkbox" id="h2-disable"> disable h₂ (its weights zero out)</label>
+      <div class="transport">
+        <button class="reset" id="btn-preset">Solved XOR</button>
+        <button class="reset" id="btn-scramble">Scramble</button>
+        <button class="reset" id="btn-train">Train</button>
+      </div>
+      <div class="readout">
+        <span class="label">mean loss, ½Σ(y&minus;ŷ)²</span>
+        <span class="value mono" id="loss-val">–</span>
+      </div>
+      <div class="train-status" id="train-status"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Truth table</h2>
+      <div class="gate-switch" id="gate-switch">
+        <button class="reset gate-btn is-active" data-gate="XOR">XOR</button>
+        <button class="reset gate-btn" data-gate="AND">AND</button>
+        <button class="reset gate-btn" data-gate="OR">OR</button>
+        <button class="reset gate-btn" data-gate="NAND">NAND</button>
+      </div>
+      <table class="truth">
+        <thead><tr><th>x₁</th><th>x₂</th><th>target</th><th>h₁</th><th>h₂</th><th>ŷ</th><th>class</th><th></th></tr></thead>
+        <tbody id="truth-body"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <section class="panel plot-wrap">
+    <h2>Classification surface <span class="tag">41 × 41 grid</span></h2>
+    <p class="hint">y = swish-free sigmoid net over the input plane; the four training points are colored by residual, target minus prediction — same recipe as the companion <code style="font-family:inherit">minimal-approximator</code> page.</p>
+    <div id="xor-surface"></div>
+    <div class="legend-row">
+      <span class="swatch"><span class="chip" style="background:var(--surface-gray)"></span> network surface</span>
+      <span class="swatch"><span class="legend-bar"></span> residual: blue = ŷ too high, red = ŷ too low</span>
+    </div>
+  </section>
+
+  <footer class="credit">
+    A hand-solvable 2→2→1 sigmoid network (the classic OR/NAND→AND decomposition of XOR). Reference implementation: companion <code>minimal-approximator</code> page, whose layout, palette and Plotly recipe this page reuses. Knob styling is a from-scratch reinterpretation of the physically-lit rotary controls at <code>ambientcss.vercel.app</code> — inlined here rather than loaded, since artifacts can only pull stylesheets from Google Fonts.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var RANGE = { min: -36, max: 36, step: 0.5 };
+  var MAXMAG = Math.max(Math.abs(RANGE.min), Math.abs(RANGE.max));
+
+  var CLUSTERS = [
+    { title: 'Neuron h₁', knobs: [
+        { key:'h1_x1', label:'x₁' }, { key:'h1_x2', label:'x₂' }, { key:'h1_b', label:'bias' } ] },
+    { title: 'Neuron h₂', knobs: [
+        { key:'h2_x1', label:'x₁' }, { key:'h2_x2', label:'x₂' }, { key:'h2_b', label:'bias' } ] },
+    { title: 'Output', knobs: [
+        { key:'o_h1', label:'h₁' }, { key:'o_h2', label:'h₂' }, { key:'o_b', label:'bias' } ] }
+  ];
+
+  var PRESET_SOLVED = { h1_x1:20, h1_x2:20, h1_b:-10, h2_x1:-20, h2_x2:-20, h2_b:30, o_h1:20, o_h2:20, o_b:-30 };
+  // Same four (x₁,x₂) rows throughout — only the target column changes per gate.
+  var GATES = { XOR: [0,1,1,0], AND: [0,0,0,1], OR: [0,1,1,1], NAND: [1,1,1,0] };
+  var EXAMPLES = [ {x:[0,0], t:0}, {x:[0,1], t:1}, {x:[1,0], t:1}, {x:[1,1], t:0} ];
+
+  var state = Object.assign({}, PRESET_SOLVED);
+  var testInput = { x1: 1, x2: 0 }; // drives the live LED diagram only
+  var isTraining = false;
+  var trainTimer = null;
+  var h2Locked = false, h2Backup = null;
+
+  function enforceH2Lock(){
+    if (!h2Locked) return;
+    state.h2_x1 = 0; state.h2_x2 = 0; state.h2_b = 0;
+  }
+
+  function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+  function clamp(v,a,b){ return Math.min(b, Math.max(a, v)); }
+  function round(v,step){ return Math.round(v/step)*step; }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.substr(0,2),16), parseInt(h.substr(2,2),16), parseInt(h.substr(4,2),16)]; }
+  function lerpHex(h1,h2,t){
+    var a=hexToRgb(h1), b=hexToRgb(h2);
+    return 'rgb(' + Math.round(lerp(a[0],b[0],t)) + ',' + Math.round(lerp(a[1],b[1],t)) + ',' + Math.round(lerp(a[2],b[2],t)) + ')';
+  }
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  function forward(x1, x2, s){
+    var z1 = s.h1_x1*x1 + s.h1_x2*x2 + s.h1_b, a1 = sigmoid(z1);
+    var z2 = s.h2_x1*x1 + s.h2_x2*x2 + s.h2_b, a2 = sigmoid(z2);
+    var zo = s.o_h1*a1 + s.o_h2*a2 + s.o_b,   ao = sigmoid(zo);
+    return { a1:a1, a2:a2, ao:ao };
+  }
+
+  // ---------------------------------------------------------------- knobs
+  var knobEls = {}; // key -> {dial, pointer, value}
+  function angleFor(v){ return -135 + (v - RANGE.min)/(RANGE.max - RANGE.min) * 270; }
+
+  function buildKnobClusters(){
+    var host = document.getElementById('knob-clusters');
+    CLUSTERS.forEach(function(cluster){
+      var clusterEl = document.createElement('div'); clusterEl.className = 'knob-cluster';
+      var h3 = document.createElement('h3'); h3.textContent = cluster.title;
+      clusterEl.appendChild(h3);
+      var row = document.createElement('div'); row.className = 'knob-row';
+      cluster.knobs.forEach(function(cfg){ row.appendChild(buildKnob(cfg, cluster.title)); });
+      clusterEl.appendChild(row);
+      host.appendChild(clusterEl);
+    });
+  }
+
+  function buildKnob(cfg, clusterTitle){
+    var wrap = document.createElement('div'); wrap.className = 'knob-wrap';
+    var housing = document.createElement('div'); housing.className = 'knob-housing';
+    for (var i = 0; i < 11; i++){
+      var tick = document.createElement('div'); tick.className = 'knob-tick';
+      tick.style.transform = 'rotate(' + (-135 + i*270/10) + 'deg)';
+      housing.appendChild(tick);
+    }
+    var dial = document.createElement('div'); dial.className = 'knob-dial';
+    dial.tabIndex = 0;
+    dial.setAttribute('role','slider');
+    dial.setAttribute('aria-valuemin', RANGE.min);
+    dial.setAttribute('aria-valuemax', RANGE.max);
+    var fullLabel = clusterTitle + ' — ' + cfg.label;
+    dial.setAttribute('aria-label', fullLabel);
+    dial.title = fullLabel;
+    var pointer = document.createElement('div'); pointer.className = 'knob-pointer';
+    dial.appendChild(pointer);
+    housing.appendChild(dial);
+    var label = document.createElement('div'); label.className = 'led-label'; label.style.fontSize = '10px'; label.textContent = cfg.label;
+    var value = document.createElement('div'); value.className = 'knob-value mono';
+    wrap.appendChild(housing); wrap.appendChild(label); wrap.appendChild(value);
+
+    knobEls[cfg.key] = { dial: dial, pointer: pointer, value: value };
+    attachDrag(dial, cfg.key);
+    return wrap;
+  }
+
+  function attachDrag(dial, key){
+    var dragging = false, startY = 0, startVal = 0;
+    dial.addEventListener('pointerdown', function(e){
+      if (isTraining) stopTraining();
+      dragging = true; startY = e.clientY; startVal = state[key];
+      try { dial.setPointerCapture(e.pointerId); } catch (err) {}
+      dial.classList.add('active');
+    });
+    dial.addEventListener('pointermove', function(e){
+      if (!dragging) return;
+      var deltaY = startY - e.clientY;
+      var v = startVal + deltaY * (RANGE.max - RANGE.min) / 140;
+      setParam(key, clamp(round(v, RANGE.step), RANGE.min, RANGE.max));
+    });
+    function end(){ dragging = false; dial.classList.remove('active'); }
+    dial.addEventListener('pointerup', end);
+    dial.addEventListener('pointercancel', end);
+    dial.addEventListener('keydown', function(e){
+      var v = state[key];
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') v += RANGE.step;
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') v -= RANGE.step;
+      else return;
+      e.preventDefault();
+      if (isTraining) stopTraining();
+      setParam(key, clamp(v, RANGE.min, RANGE.max));
+    });
+  }
+
+  function refreshKnobVisual(key){
+    var el = knobEls[key], v = state[key];
+    el.dial.style.transform = 'rotate(' + angleFor(v) + 'deg)';
+    el.dial.setAttribute('aria-valuenow', v);
+    el.value.textContent = v.toFixed(1);
+    var glow = 0.2 + 0.8*Math.min(1, Math.abs(v)/MAXMAG);
+    el.pointer.style.boxShadow = '0 0 ' + (2+8*glow) + 'px var(--copper-glow)';
+  }
+
+  function setParam(key, v){
+    state[key] = v;
+    refreshKnobVisual(key);
+    requestRedraw();
+  }
+
+  // ---------------------------------------------------------------- network diagram (LEDs + faint structural wires)
+  var COLUMNS = [
+    { cls:'inputs', nodes:[ {key:'x1', label:'x₁', binary:true}, {key:'x2', label:'x₂', binary:true} ] },
+    { cls:'hidden', nodes:[ {key:'h1', label:'h₁'}, {key:'h2', label:'h₂'} ] },
+    { cls:'output', nodes:[ {key:'out', label:'ŷ'} ] }
+  ];
+  // Every input feeds every hidden neuron, both hidden neurons feed the output.
+  // Each wire is tagged with the weight key that runs through it, so its own
+  // glow — brighter and thicker with |weight|, warm for positive, cool for
+  // negative — doubles as a live readout of that knob, same idea as the LEDs.
+  var WIRES = [
+    { a:'x1', b:'h1',  key:'h1_x1' }, { a:'x1', b:'h2',  key:'h2_x1' },
+    { a:'x2', b:'h1',  key:'h1_x2' }, { a:'x2', b:'h2',  key:'h2_x2' },
+    { a:'h1', b:'out', key:'o_h1'  }, { a:'h2', b:'out', key:'o_h2'  }
+  ];
+  var ledEls = {};
+  var wireEls = {}; // weight key -> line element
+
+  function buildNetworkDiagram(){
+    var host = document.getElementById('network-diagram');
+    COLUMNS.forEach(function(col){
+      var colEl = document.createElement('div'); colEl.className = 'net-col ' + col.cls;
+      if (col.nodes.length === 1) colEl.style.justifyContent = 'center';
+      col.nodes.forEach(function(n){
+        var node = document.createElement('div'); node.className = 'led-node';
+        var lamp = document.createElement('div'); lamp.className = 'led-lamp';
+        if (n.binary){
+          lamp.classList.add('clickable');
+          lamp.tabIndex = 0;
+          lamp.setAttribute('role','button');
+          lamp.setAttribute('aria-label', 'toggle ' + n.label);
+          lamp.addEventListener('click', function(){ testInput[n.key] = testInput[n.key] ? 0 : 1; refreshDiagram(); });
+          lamp.addEventListener('keydown', function(e){
+            if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); testInput[n.key] = testInput[n.key] ? 0 : 1; refreshDiagram(); }
+          });
+        }
+        var label = document.createElement('div'); label.className = 'led-label'; label.textContent = n.label;
+        var value = document.createElement('div'); value.className = 'led-value mono';
+        node.appendChild(lamp); node.appendChild(label); node.appendChild(value);
+        colEl.appendChild(node);
+        ledEls[n.key] = { lamp: lamp, value: value, binary: !!n.binary };
+      });
+      host.appendChild(colEl);
+    });
+    layoutWires();
+    window.addEventListener('resize', layoutWires);
+  }
+
+  function styleWire(line, key){
+    var v = state[key];
+    var mag = Math.min(1, Math.abs(v)/MAXMAG);
+    line.setAttribute('stroke', v >= 0 ? css('--copper') : css('--err-neg'));
+    line.setAttribute('stroke-width', (1 + 2.6*mag).toFixed(2));
+    line.setAttribute('opacity', (0.15 + 0.75*mag).toFixed(2));
+  }
+
+  function refreshWireGlow(){
+    WIRES.forEach(function(w){ if (wireEls[w.key]) styleWire(wireEls[w.key], w.key); });
+  }
+
+  function layoutWires(){
+    var svg = document.getElementById('net-wires');
+    var host = document.getElementById('network-diagram');
+    var hostRect = host.getBoundingClientRect();
+    if (!hostRect.width || !hostRect.height) return; // not laid out yet (e.g. hidden panel)
+    svg.setAttribute('viewBox', '0 0 ' + hostRect.width + ' ' + hostRect.height);
+    svg.innerHTML = '';
+    var svgNS = 'http://www.w3.org/2000/svg';
+    function centerOf(key){
+      var r = ledEls[key].lamp.getBoundingClientRect();
+      return { x: r.left + r.width/2 - hostRect.left, y: r.top + r.height/2 - hostRect.top };
+    }
+    WIRES.forEach(function(w){
+      var a = centerOf(w.a), b = centerOf(w.b);
+      var line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+      line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+      line.setAttribute('stroke-linecap', 'round');
+      wireEls[w.key] = line;
+      styleWire(line, w.key);
+      svg.appendChild(line);
+    });
+  }
+
+  function setLed(key, v){
+    var el = ledEls[key];
+    var t = clamp(v, 0, 1);
+    el.lamp.style.background = 'radial-gradient(circle at 35% 30%, ' + lerpHex(css('--track'), css('--copper-ramp-a'), t) + ', ' + lerpHex(css('--track'), css('--copper'), t) + ')';
+    el.lamp.style.boxShadow = (t > 0.05 ? '0 0 ' + (3+11*t) + 'px var(--copper-glow), ' : '') + 'inset 0 1px 3px rgba(0,0,0,.18)';
+    el.value.textContent = el.binary ? v.toFixed(0) : v.toFixed(2);
+  }
+
+  function refreshDiagram(){
+    var r = forward(testInput.x1, testInput.x2, state);
+    setLed('x1', testInput.x1);
+    setLed('x2', testInput.x2);
+    setLed('h1', r.a1);
+    setLed('h2', r.a2);
+    setLed('out', r.ao);
+  }
+
+  // ---------------------------------------------------------------- truth table
+  function refreshTruthTable(){
+    var body = document.getElementById('truth-body');
+    body.innerHTML = '';
+    var sse = 0;
+    EXAMPLES.forEach(function(ex){
+      var r = forward(ex.x[0], ex.x[1], state);
+      var pred = r.ao >= 0.5 ? 1 : 0;
+      var ok = pred === ex.t;
+      sse += 0.5*(ex.t - r.ao)*(ex.t - r.ao);
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + ex.x[0].toFixed(0) + '</td><td>' + ex.x[1].toFixed(0) + '</td>' +
+        '<td>' + ex.t.toFixed(0) + '</td>' +
+        '<td>' + r.a1.toFixed(2) + '</td><td>' + r.a2.toFixed(2) + '</td>' +
+        '<td>' + r.ao.toFixed(3) + '</td><td>' + pred + '</td>' +
+        '<td><span class="status-chip" style="background:' + (ok ? css('--good') : css('--bad')) + '"></span></td>';
+      body.appendChild(tr);
+    });
+    document.getElementById('loss-val').textContent = (sse/EXAMPLES.length).toFixed(4);
+  }
+
+  // ---------------------------------------------------------------- classification surface
+  var SURF_N = 41, SURF_LO = -0.3, SURF_HI = 1.3;
+  var surfXs = [], surfYs = [];
+  for (var g = 0; g < SURF_N; g++){
+    surfXs.push(SURF_LO + (SURF_HI-SURF_LO)*g/(SURF_N-1));
+    surfYs.push(SURF_LO + (SURF_HI-SURF_LO)*g/(SURF_N-1));
+  }
+  function computeSurfaceZ(){
+    var z = [];
+    for (var yi = 0; yi < SURF_N; yi++){
+      var row = [];
+      for (var xi = 0; xi < SURF_N; xi++) row.push(forward(surfXs[xi], surfYs[yi], state).ao);
+      z.push(row);
+    }
+    return z;
+  }
+  function computeResiduals(){
+    return EXAMPLES.map(function(ex){ return ex.t - forward(ex.x[0], ex.x[1], state).ao; });
+  }
+
+  var surfacePlotted = false;
+  function layoutColors(){
+    return { paper: css('--paper-raised'), ink: css('--ink'), inkSoft: css('--ink-soft'), line: css('--line') };
+  }
+
+  function drawSurface(){
+    var c = layoutColors();
+    var residuals = computeResiduals();
+    var maxAbs = Math.max(1e-6, Math.max.apply(null, residuals.map(Math.abs)));
+    var surfaceTrace = {
+      type: 'surface',
+      x: surfXs, y: surfYs, z: computeSurfaceZ(),
+      colorscale: [[0, css('--surface-gray')], [1, css('--surface-gray')]],
+      showscale: false, opacity: 0.92,
+      contours: { z: { show:false } },
+      lighting: { ambient:0.75, diffuse:0.45, specular:0.1, roughness:0.7 },
+      hovertemplate: 'x₁ %{x:.2f}<br>x₂ %{y:.2f}<br>ŷ %{z:.3f}<extra></extra>'
+    };
+    var dataTrace = {
+      type: 'scatter3d', mode: 'markers',
+      x: EXAMPLES.map(function(ex){ return ex.x[0]; }),
+      y: EXAMPLES.map(function(ex){ return ex.x[1]; }),
+      z: EXAMPLES.map(function(ex){ return ex.t; }),
+      marker: {
+        size: 5,
+        color: residuals,
+        colorscale: [[0, css('--err-neg')], [0.5, css('--err-mid')], [1, css('--err-pos')]],
+        cmid: 0, cmin: -maxAbs, cmax: maxAbs,
+        line: { color: c.ink, width: 1 }
+      },
+      customdata: residuals,
+      hovertemplate: 'x₁ %{x:.0f}<br>x₂ %{y:.0f}<br>target %{z:.0f}<br>residual %{customdata:+.3f}<extra></extra>'
+    };
+    var layout = {
+      margin: { l:0, r:0, t:0, b:0 },
+      paper_bgcolor: c.paper,
+      scene: {
+        bgcolor: c.paper,
+        xaxis: { title:'x₁', range:[SURF_LO,SURF_HI], color:c.inkSoft, gridcolor:c.line, zerolinecolor:c.line, backgroundcolor:c.paper },
+        yaxis: { title:'x₂', range:[SURF_LO,SURF_HI], color:c.inkSoft, gridcolor:c.line, zerolinecolor:c.line, backgroundcolor:c.paper },
+        zaxis: { title:'ŷ',  range:[0,1],              color:c.inkSoft, gridcolor:c.line, zerolinecolor:c.line, backgroundcolor:c.paper },
+        camera: { eye: { x:1.55, y:-1.65, z:0.85 } }
+      },
+      font: { family:'IBM Plex Sans, sans-serif', color:c.ink, size:11 }
+    };
+    Plotly.react('xor-surface', [surfaceTrace, dataTrace], layout, { displayModeBar:false, responsive:true });
+    surfacePlotted = true;
+  }
+
+  function updateSurface(){
+    // Guarded: a Plotly failure (blocked script, no WebGL, ad blocker) should
+    // never take the knobs, diagram or truth table down with it.
+    try {
+      if (!surfacePlotted){ drawSurface(); return; }
+      var residuals = computeResiduals();
+      var maxAbs = Math.max(1e-6, Math.max.apply(null, residuals.map(Math.abs)));
+      Plotly.restyle('xor-surface', { z: [computeSurfaceZ()] }, [0]);
+      Plotly.restyle('xor-surface', {
+        // z included so a gate switch (XOR/AND/OR/NAND) moves the markers to
+        // their new target height, not just recolors them at the old one.
+        z: [EXAMPLES.map(function(ex){ return ex.t; })],
+        'marker.color': [residuals], 'marker.cmin': [-maxAbs], 'marker.cmax': [maxAbs], customdata: [residuals]
+      }, [1]);
+    } catch (err) { /* surface plot unavailable; rest of the console still works */ }
+  }
+
+  // ---------------------------------------------------------------- redraw loop
+  var needsRedraw = false;
+  function requestRedraw(){
+    if (needsRedraw) return;
+    needsRedraw = true;
+    requestAnimationFrame(function(){ needsRedraw = false; redrawAll(); });
+  }
+  function redrawAll(){ refreshTruthTable(); refreshDiagram(); refreshWireGlow(); updateSurface(); }
+
+  function applyState(next){
+    state = Object.assign({}, next);
+    enforceH2Lock();
+    Object.keys(knobEls).forEach(refreshKnobVisual);
+    redrawAll();
+  }
+
+  // ---------------------------------------------------------------- training
+  function trainStep(lr){
+    var g = {}; Object.keys(state).forEach(function(k){ g[k] = 0; });
+    EXAMPLES.forEach(function(ex){
+      var x1 = ex.x[0], x2 = ex.x[1];
+      var r = forward(x1, x2, state);
+      var dOut = (r.ao - ex.t) * r.ao * (1 - r.ao);
+      g.o_h1 += dOut*r.a1; g.o_h2 += dOut*r.a2; g.o_b += dOut;
+      var d1 = dOut*state.o_h1 * r.a1*(1-r.a1);
+      var d2 = dOut*state.o_h2 * r.a2*(1-r.a2);
+      g.h1_x1 += d1*x1; g.h1_x2 += d1*x2; g.h1_b += d1;
+      g.h2_x1 += d2*x1; g.h2_x2 += d2*x2; g.h2_b += d2;
+    });
+    Object.keys(state).forEach(function(k){
+      state[k] = clamp(state[k] - lr*g[k]/EXAMPLES.length, RANGE.min, RANGE.max);
+    });
+    enforceH2Lock();
+  }
+
+  function currentLoss(){
+    var sse = 0;
+    EXAMPLES.forEach(function(ex){ var ao = forward(ex.x[0], ex.x[1], state).ao; sse += 0.5*(ex.t-ao)*(ex.t-ao); });
+    return sse/EXAMPLES.length;
+  }
+
+  // Plain gradient descent finds the classic XOR saddle — both hidden units
+  // collapsing to the same function — often enough that a demo relying on it
+  // would stall visibly ~40% of the time. A stall-triggered restart (a standard,
+  // legitimate tactic against non-convex loss surfaces, not a thumb on the scale)
+  // fixes that; every restart is reported in the status line, not hidden.
+  var trainSteps = 0, TRAIN_MAX_STEPS = 40000, STALL_CHECK_EVERY = 1500, restartCount = 0;
+
+  function randomInit(){
+    var next = {};
+    Object.keys(state).forEach(function(k){ next[k] = Math.random()*4 - 2; });
+    return next;
+  }
+
+  function trainTick(){
+    for (var i = 0; i < 100 && trainSteps < TRAIN_MAX_STEPS; i++, trainSteps++){
+      trainStep(5);
+      if (trainSteps > 0 && trainSteps % STALL_CHECK_EVERY === 0 && currentLoss() > 0.03){
+        Object.keys(state).forEach(function(k){ state[k] = randomInit()[k]; });
+        enforceH2Lock();
+        restartCount++;
+      }
+    }
+    Object.keys(knobEls).forEach(refreshKnobVisual);
+    redrawAll();
+    var loss = currentLoss();
+    document.getElementById('train-status').textContent =
+      'training… step ' + trainSteps + ', mean loss ' + loss.toFixed(4) +
+      (restartCount ? '  (restarted ' + restartCount + '× after stalling)' : '');
+    if (loss < 0.005 || trainSteps >= TRAIN_MAX_STEPS){
+      stopTraining(loss < 0.005
+        ? 'converged after ' + trainSteps + ' steps' + (restartCount ? ' (' + restartCount + ' restart' + (restartCount>1?'s':'') + ')' : '')
+        : 'stopped at step limit');
+      return;
+    }
+    trainTimer = requestAnimationFrame(trainTick);
+  }
+
+  function startTraining(){
+    isTraining = true; trainSteps = 0; restartCount = 0;
+    document.getElementById('btn-train').textContent = 'Stop';
+    document.getElementById('btn-train').classList.add('is-active');
+    applyState(randomInit());
+    trainTimer = requestAnimationFrame(trainTick);
+  }
+  function stopTraining(message){
+    isTraining = false;
+    if (trainTimer) cancelAnimationFrame(trainTimer);
+    document.getElementById('btn-train').textContent = 'Train';
+    document.getElementById('btn-train').classList.remove('is-active');
+    document.getElementById('train-status').textContent = message || '';
+  }
+
+  // ---------------------------------------------------------------- h₂ lock
+  // "Disabling" h₂ zeros its own three weights (not its output-layer connection),
+  // so it settles at a constant sigmoid(0) = 0.5 — no longer able to respond to
+  // the inputs at all. Previous values are restored when re-enabled.
+  function setH2Locked(locked){
+    if (isTraining) stopTraining();
+    h2Locked = locked;
+    if (locked){
+      h2Backup = { h2_x1: state.h2_x1, h2_x2: state.h2_x2, h2_b: state.h2_b };
+    } else if (h2Backup){
+      state.h2_x1 = h2Backup.h2_x1; state.h2_x2 = h2Backup.h2_x2; state.h2_b = h2Backup.h2_b;
+      h2Backup = null;
+    }
+    enforceH2Lock();
+    ['h2_x1','h2_x2','h2_b'].forEach(function(k){
+      knobEls[k].dial.classList.toggle('locked', locked);
+      refreshKnobVisual(k);
+    });
+    redrawAll();
+  }
+
+  // ---------------------------------------------------------------- gate switch
+  function setGate(name){
+    if (isTraining) stopTraining();
+    var targets = GATES[name];
+    EXAMPLES.forEach(function(ex, i){ ex.t = targets[i]; });
+    document.querySelectorAll('.gate-btn').forEach(function(b){ b.classList.toggle('is-active', b.dataset.gate === name); });
+    redrawAll();
+  }
+
+  // ---------------------------------------------------------------- wire up
+  buildKnobClusters();
+  buildNetworkDiagram();
+
+  document.getElementById('h2-disable').addEventListener('change', function(e){
+    setH2Locked(e.target.checked);
+  });
+  document.querySelectorAll('.gate-btn').forEach(function(b){
+    b.addEventListener('click', function(){ setGate(b.dataset.gate); });
+  });
+
+  document.getElementById('btn-preset').addEventListener('click', function(){
+    if (isTraining) stopTraining();
+    applyState(PRESET_SOLVED);
+  });
+  document.getElementById('btn-scramble').addEventListener('click', function(){
+    if (isTraining) stopTraining();
+    var next = {};
+    Object.keys(state).forEach(function(k){ next[k] = round(Math.random()*(RANGE.max-RANGE.min) + RANGE.min, RANGE.step); });
+    applyState(next);
+  });
+  document.getElementById('btn-train').addEventListener('click', function(){
+    if (isTraining) stopTraining('stopped by user'); else startTraining();
+  });
+
+  applyState(PRESET_SOLVED);
+
+  if (typeof window.matchMedia === 'function'){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener && mq.addEventListener('change', function(){ surfacePlotted = false; drawSurface(); refreshDiagram(); });
+  }
+})();
+</script>
