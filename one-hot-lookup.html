@@ -1,0 +1,785 @@
+<html lang=pl>
+<meta charset="utf-8">
+<title></title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:        #f3efe3;
+    --paper-raised: #fbf8ef;
+    --ink:          #241f17;
+    --ink-soft:     #6d6252;
+    --line:         #ddd2ba;
+    --line-strong:  #c7b99a;
+    --copper:       #b85a26;
+    --copper-soft:  rgba(184,90,38,.13);
+    --cool:         #2f6ea6;
+    --good:         #2f7a52;
+    --focus:        #8a4a1f;
+    --track:        #e6dcc4;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:        #171310;
+      --paper-raised: #211b14;
+      --ink:          #f1e7d6;
+      --ink-soft:     #a5947c;
+      --line:         #3d3324;
+      --line-strong:  #55462f;
+      --copper:       #e08a4c;
+      --copper-soft:  rgba(224,138,76,.16);
+      --cool:         #6fa8d8;
+      --good:         #5fbf8c;
+      --focus:        #f0a869;
+      --track:        #362c1e;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:        #171310;
+    --paper-raised: #211b14;
+    --ink:          #f1e7d6;
+    --ink-soft:     #a5947c;
+    --line:         #3d3324;
+    --line-strong:  #55462f;
+    --copper:       #e08a4c;
+    --copper-soft:  rgba(224,138,76,.16);
+    --cool:         #6fa8d8;
+    --good:         #5fbf8c;
+    --focus:        #f0a869;
+    --track:        #362c1e;
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    background: var(--paper); color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px; line-height: 1.5;
+  }
+  h1,h2,h3{ font-family:"IBM Plex Serif", Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, "SF Mono", monospace; font-variant-numeric: tabular-nums; }
+
+  .page{
+    max-width: 1180px; margin: 0 auto; padding: 28px 28px 40px;
+    display: grid; grid-template-columns: 200px 1fr; gap: 22px;
+  }
+  header.top{
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line-strong); margin-bottom: 4px;
+  }
+  header.top .eyebrow{
+    text-transform: uppercase; letter-spacing: .09em; font-size: 11px;
+    color: var(--copper); font-weight: 600; margin-bottom: 6px;
+  }
+  header.top h1{ font-size: 26px; font-weight: 600; }
+  header.top p{ max-width: 56ch; color: var(--ink-soft); font-size: 13px; margin-top: 6px; }
+  header.top .spec{ text-align: right; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  header.top .spec b{ color: var(--ink); font-weight: 600; }
+
+  section.panel{
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 10px; padding: 18px 18px 20px;
+  }
+  .rail{ display:flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .panel h2{
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px;
+  }
+  .panel h2 span.tag{
+    font-family:"IBM Plex Mono", monospace; text-transform: none; letter-spacing: 0;
+    font-size: 11px; color: var(--ink-soft); font-weight: 500;
+  }
+  .panel .hint{ color: var(--ink-soft); font-size: 12px; margin: 2px 0 14px; }
+
+  /* ---- predictive keyboard ---- */
+  .keyboard{ grid-column: 1 / -1; }
+  .type-field{
+    display:flex; align-items:center; gap:2px; width:100%;
+    background: var(--paper); border:1px solid var(--line-strong); border-radius:8px;
+    padding: 12px 14px; margin-bottom: 12px;
+  }
+  .type-field input{
+    flex:0 1 auto; min-width:20em; border:none; background:transparent; outline:none;
+    font-family:"IBM Plex Mono", monospace; font-size:17px; color:var(--ink);
+  }
+  .type-field input::placeholder{ color:var(--ink-soft); opacity:.6; }
+  .type-field:focus-within{ border-color: var(--copper); box-shadow: 0 0 0 3px var(--copper-soft); }
+  .ghost{
+    flex:1 1 auto; font-family:"IBM Plex Mono", monospace; font-size:17px;
+    color:var(--ink-soft); opacity:.45; white-space:pre; pointer-events:none;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+
+  .suggest-row{ display:flex; gap:8px; align-items:stretch; }
+  .suggest-key{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    padding:10px 6px; border:1px solid var(--line-strong); border-radius:8px;
+    background:transparent; color:var(--ink); font:inherit; cursor:pointer; min-width:0;
+  }
+  .suggest-key:hover{ border-color:var(--copper); background:var(--copper-soft); }
+  .suggest-key:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .suggest-key.top{ border-color:var(--copper); background:var(--copper-soft); }
+  .suggest-key.split{ border-color:var(--good); }
+  .suggest-key .k{ font-family:"IBM Plex Mono",monospace; font-size:18px; font-weight:600; line-height:1.1; }
+  .suggest-key .pct{ font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-soft); }
+
+  .kb-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+  button.act{
+    padding:8px 13px; border-radius:7px; border:1px solid var(--line-strong);
+    background:transparent; color:var(--ink); font:inherit; font-weight:500; font-size:12px; cursor:pointer;
+  }
+  button.act:hover{ border-color:var(--copper); color:var(--copper); }
+  button.act:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  button.act:disabled{ opacity:.4; cursor:not-allowed; }
+  button.act.is-active{ background:var(--copper); color:var(--paper-raised); border-color:var(--copper); }
+  .sample-toggle{
+    display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); cursor:pointer; user-select:none;
+  }
+  .sample-toggle input{ accent-color: var(--copper); width:14px; height:14px; cursor:pointer; }
+  .kb-status{
+    margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft);
+  }
+
+  /* ---- rail bits ---- */
+  .sentence-list{ display:flex; flex-direction:column; gap:3px; }
+  .sentence{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; line-height:1.45;
+    background:var(--track); border-radius:4px; padding:4px 8px; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .fork-list{ display:flex; flex-direction:column; gap:5px; }
+  .fork-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:8px; text-align:left;
+    padding:6px 9px; border:1px solid var(--line-strong); border-radius:6px;
+    background:transparent; color:var(--ink); font:inherit; cursor:pointer; width:100%;
+  }
+  .fork-btn:hover{ border-color:var(--copper); background:var(--copper-soft); }
+  .fork-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .fork-btn .pre{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .fork-btn .split{
+    font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--copper);
+    white-space:nowrap; font-weight:600;
+  }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:4px; }
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; width:22px; height:22px;
+    display:grid; place-items:center; border-radius:4px; background:var(--track); color:var(--ink-soft);
+  }
+  .chip.is-active{ background:var(--copper); color:var(--paper-raised); font-weight:600; }
+  .stat{
+    margin-top:12px; font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-soft);
+    padding-top:10px; border-top:1px solid var(--line); line-height:1.6;
+  }
+  .stat b{ color:var(--ink); }
+
+  /* ---- lookup figure ---- */
+  .lookup{ display:flex; gap:16px; align-items:flex-start; overflow-x:auto; padding-bottom:4px; }
+  .grid-block{ display:grid; gap:2px; min-width:0; }
+  .grid-row{ display:grid; gap:2px; align-items:center; }
+  .rlabel{
+    font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--ink-soft);
+    text-align:right; padding-right:6px; white-space:nowrap;
+  }
+  .hcell{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; text-align:center;
+    color:var(--ink-soft); height:16px; line-height:16px;
+  }
+  .hcell.lit{ color:var(--copper); font-weight:600; }
+  .ocell{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; text-align:center;
+    height:19px; line-height:19px; border-radius:3px; background:var(--track); color:var(--ink-soft);
+  }
+  .ocell.lit{ background:var(--copper); color:var(--paper-raised); font-weight:700; }
+  .wcell{ height:16px; border-radius:2px; opacity:.3; }
+  .wcell.lit{ opacity:1; box-shadow: inset 0 0 0 1px var(--copper); }
+  .sep{ height:1px; background:var(--line-strong); margin:4px 0 3px; opacity:.7; }
+
+  .embed-strip{ display:grid; gap:2px; }
+  .embed-cap{
+    font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--copper);
+    height:16px; line-height:16px; white-space:nowrap;
+  }
+  .ecell{
+    font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:10px;
+    height:16px; line-height:16px; text-align:center; width:52px;
+    border-radius:3px; background:var(--copper-soft); border:1px solid var(--copper); color:var(--ink);
+  }
+  .ecell.empty{ background:transparent; border-color:var(--line); color:var(--ink-soft); }
+  .ecell.state{ background:var(--track); border-color:var(--line-strong); }
+  .prob-strip{ display:grid; gap:2px; }
+  .prow{ display:grid; grid-template-columns:15px 44px; gap:3px; align-items:center; height:16px; }
+  .pch{
+    font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--ink-soft);
+    text-align:center; line-height:16px;
+  }
+  .pval{
+    font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:10px;
+    line-height:16px; text-align:center; border-radius:3px;
+    border:1px solid var(--line); color:var(--ink);
+  }
+  .prow.best .pch{ color:var(--good); font-weight:700; }
+  .prow.best .pval{ border-color:var(--good); border-width:1.5px; font-weight:600; }
+  .op-col{ align-self:stretch; display:flex; flex-direction:column; }
+  .op-body{ flex:1; display:grid; place-items:center; color:var(--ink-soft); font-size:15px; padding:0 2px; }
+  .lookup-formula{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-soft);
+    margin-top:10px; padding-top:10px; border-top:1px solid var(--line); line-height:1.6;
+  }
+  .lookup-formula b{ color:var(--copper); font-weight:600; }
+  .eos-note{
+    display:flex; align-items:center; gap:9px;
+    background:var(--track); border:1px dashed var(--line-strong); border-radius:8px;
+    padding:11px 13px; font-size:12.5px; color:var(--ink-soft); line-height:1.5;
+  }
+  .eos-note .stop{
+    font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:700;
+    color:var(--copper); flex:none;
+  }
+  .eos-note b{ color:var(--ink); font-weight:600; }
+
+  .stage{ margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  .stage h3{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--ink-soft); font-weight:600; margin-bottom:3px;
+  }
+  .stage .formula{ font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); margin-bottom:12px; }
+  .stage .formula b{ color:var(--copper); font-weight:600; }
+
+  .hvec{ display:flex; flex-wrap:wrap; gap:3px; }
+  .hunit{
+    font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:10.5px;
+    width:46px; height:24px; line-height:24px; text-align:center; border-radius:4px;
+  }
+
+  .bars{ display:flex; flex-direction:column; gap:6px; }
+  .bar-row{ display:grid; grid-template-columns: 24px 1fr 56px; gap:10px; align-items:center; }
+  .bar-key{ font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink); text-align:center; }
+  .bar-val{ font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:11.5px; text-align:right; color:var(--ink-soft); }
+  .bar-track{ position:relative; height:15px; background:var(--track); border-radius:4px; overflow:hidden; }
+  .bar-fill{ position:absolute; top:0; bottom:0; left:0; border-radius:3px; background:var(--copper); }
+  .bar-row.is-top .bar-fill{ background:var(--good); }
+  .bar-row.is-top .bar-key, .bar-row.is-top .bar-val{ color:var(--good); font-weight:600; }
+
+  @media (max-width: 900px){
+    .page{ grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Character RNN · Predictive Text</div>
+      <h1>A one-hot times a matrix is just a column lookup</h1>
+      <p>Type below and the network guesses your next character, the way a phone keyboard does. Every keystroke enters as a <span id="vbits">20</span>-bit vector that is <em>all zeros but one</em> — so multiplying it by W<sub>xh</sub> can't do anything except pick out the column under that single 1. That column is the character's embedding.</p>
+    </div>
+    <div class="spec">
+      trained on <b id="spec-sents">5</b> sentences · <b id="spec-chars">108</b> characters<br>
+      <b class="mono" id="spec-v">20</b> vocab · <b class="mono" id="spec-h">24</b> hidden · loss <b class="mono" id="spec-loss">0.0745</b>
+    </div>
+  </header>
+
+  <section class="panel keyboard">
+    <h2>Predictive keyboard <span class="tag" id="kb-tag">next character</span></h2>
+    <p class="hint">Type letters, a space or a period. Tap a suggestion to accept it, or hit Autocomplete and watch it finish a sentence one character at a time. A period ends the sentence — the network has nothing trained past it, so it stops there.</p>
+    <div class="type-field">
+      <input id="typed" type="text" spellcheck="false" autocomplete="off" autocapitalize="off"
+             aria-label="typed text" placeholder="start typing, or just hit Autocomplete…">
+      <span class="ghost" id="ghost"></span>
+    </div>
+    <div class="suggest-row" id="suggest-row"></div>
+    <div class="kb-actions">
+      <button class="act" id="btn-back">⌫ Backspace</button>
+      <button class="act" id="btn-auto">Autocomplete</button>
+      <button class="act" id="btn-clear">Clear</button>
+      <label class="sample-toggle"><input type="checkbox" id="chk-sample"> sample instead of always taking the top guess</label>
+      <span class="kb-status" id="kb-status"></span>
+    </div>
+  </section>
+
+  <div class="rail">
+    <section class="panel">
+      <h2>What it learned <span class="tag" id="sent-tag">5 sentences</span></h2>
+      <p class="hint">Each one is trained as its own sequence, starting from a blank hidden state.</p>
+      <div class="sentence-list" id="sentence-list"></div>
+      <div class="stat" id="loss-stat"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Where it forks <span class="tag" id="fork-tag"></span></h2>
+      <p class="hint">At these prefixes the sentences disagree, so the model has to split its guess. Click one to jump there.</p>
+      <div class="fork-list" id="fork-list"></div>
+      <div class="stat" id="space-stat"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Vocabulary <span class="tag" id="vocab-tag"></span></h2>
+      <p class="hint">Only the characters these sentences actually use. The lit chip is the one being looked up.</p>
+      <div class="chips" id="vocab-chips"></div>
+      <div class="stat" id="zero-stat"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>The lookup <span class="tag" id="lookup-tag"></span></h2>
+    <p class="hint">The one-hot row sits directly above the W<sub>xh</sub> columns it indexes. Only the outlined column survives the multiply.</p>
+
+    <div class="lookup">
+      <div class="grid-block" id="matrix-block"></div>
+      <div class="embed-strip" id="embed-strip"></div>
+      <div class="op-col"><div class="embed-cap">&nbsp;</div><div class="op-body">→</div></div>
+      <div class="embed-strip" id="hidden-strip"></div>
+      <div class="op-col"><div class="embed-cap">&nbsp;</div><div class="op-body">→</div></div>
+      <div class="prob-strip" id="prob-strip"></div>
+    </div>
+    <div class="lookup-formula">
+      h<sub>t</sub> = tanh( <b>embedding</b> + W<sub>hh</sub>·h<sub>t-1</sub> + b<sub>h</sub> ), then
+      p = softmax( W<sub>hy</sub>·h<sub>t</sub> + b<sub>y</sub> ). The looked-up column is one of three terms behind the
+      <span id="hcount">32</span>-unit state, which softmax turns into one probability per vocabulary character —
+      note the state is <span id="hcount2">32</span> long but p is <span id="vcount2">21</span>, a different space.
+    </div>
+
+    <div class="stage">
+      <h3>Next-character distribution</h3>
+      <div class="formula">p<sub>t</sub> = softmax( W<sub>hy</sub>·h<sub>t</sub> + b<sub>y</sub> ) &nbsp;— top 6 of <span id="vcount">20</span></div>
+      <div class="bars" id="prob-bars"></div>
+      <div class="eos-note" id="eos-note" hidden></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var W = {"vocab":[" ",".","a","c","d","e","f","g","h","i","l","m","n","o","p","r","s","t","u","w","y"],"H":32,"sentences":["see you at the station.","see you at the office.","see you at the airport.","see you tomorrow.","see you later.","call me when you land.","call me when you get home.","call me tomorrow.","call me later.","sorry i am running late.","sorry i am on my way.","sorry i missed your call.","the meeting is at ten.","the meeting is cancelled."],"loss":0.1252,"floor":0.1252,"Wxh":[[0.387,-0.083,-0.109,-0.998,-0.255,-0.364,-1.014,-1.781,0.872,0.826,-0.179,0.218,-0.266,-0.81,1.429,1.881,-0.379,-0.368,1.848,-1.203,0.038],[0.248,0.05,-1.389,1.282,0.261,0.057,1.31,0.948,0.006,-0.987,0.725,0.657,-0.149,-0.46,1.651,0.044,-0.437,0.87,-0.272,0.224,0.695],[-0.405,-0.369,-0.176,1.319,1.114,-0.358,-0.762,0.822,0.793,0.249,-1.241,0.452,-0.054,-0.881,-0.029,-0.546,0.597,-0.263,-0.965,1.095,0.477],[-0.401,0.011,0.766,-0.301,1.017,0.125,3.61,0.167,0.075,0.475,-1.234,0.544,0.523,0.577,-2.094,-1.016,-0.901,-0.453,-0.966,1.994,0.164],[-0.07,-0.229,-1.246,-0.983,-0.46,0.189,-0.057,1.13,0.734,-0.438,-1.546,1.538,-0.58,-0.035,2.079,-1.193,0.473,0.489,-0.527,-1.122,1.109],[-1.399,0.463,0.799,1.426,-0.05,-0.761,1.161,0.528,-0.445,-0.712,-0.979,-1.436,0.224,1.709,-0.447,-0.674,-1.175,1.173,1.764,-1.426,-1.305],[0.95,-0.344,0.791,1.75,-1.048,-0.715,0.461,-1.296,0.283,-1.299,1.362,0.628,-0.761,-0.263,1.53,-1.201,0.399,1.204,-1.248,1.177,0.152],[0.231,0.056,0.072,1.521,-0.839,0.52,-0.514,-0.223,0.233,0.939,-0.072,0.087,-0.592,0.855,1.4,1.762,0.575,-0.708,0.166,-1.058,-0.814],[0.28,-0.035,-2.028,1.568,-1.655,0.005,-0.243,0.241,0.937,0.947,0.67,-0.381,0.306,0.023,1.539,0.91,-0.301,0.729,0.924,-1.765,-0.013],[-0.82,-0.109,-0.265,-0.776,1.72,-0.261,2.746,-1.813,0.341,0.016,-0.354,0.526,-1.024,1.11,2.977,-0.059,0.246,0.624,0.704,0.149,-0.195],[-0.357,-0.045,-1.897,-2.133,-0.962,0.076,-1.182,0.939,0.39,-0.176,0.472,-0.966,-0.281,0.563,-1.386,0.674,0.889,0.483,0.04,0.558,-0.328],[0.462,-0.014,0.609,-0.704,-2.413,0.51,-0.945,-0.069,-0.762,0.691,0.469,-0.582,-0.816,-0.609,-0.429,0.731,-0.89,-0.494,0.463,-1.927,0.536],[1.506,0.217,1.15,-1.118,0.156,-0.155,2.436,-0.691,-0.822,0.302,0.401,-1.777,0.777,1.091,-2.267,-1.221,-0.793,-0.156,-0.243,1.955,-1.133],[0.848,0.287,-2.072,0.936,0.011,-0.137,0.23,0.29,-0.879,1.833,0.787,0.602,0.587,-0.62,-3.09,-0.97,-0.632,-0.61,0.53,0.097,0.088],[-0.728,-0.369,0.738,1.396,0.84,0.446,-2.587,1.099,0.291,0.218,-1.873,0.918,-0.436,-1.795,0.72,-0.251,1.001,-0.454,-1.918,0.092,0.079],[0.055,0.11,2.735,-1.193,0.877,-0.734,-0.098,0.725,0.869,1.226,-0.908,1.758,0.964,-0.913,1.376,0.001,-0.405,0.753,-0.004,-1.945,0.021],[0.443,-0.043,-0.253,0.07,0.377,-0.473,-0.362,0.209,-0.698,0.35,1.965,-0.88,-0.493,0.522,-0.286,1.11,-0.055,-0.729,0.456,-0.817,0.923],[-0.327,0.284,0.848,1.377,1.458,0.147,-1.795,-0.988,0.567,1.448,1.057,-0.883,1.086,-0.317,-0.587,0.262,-0.29,-0.315,1.159,1.928,0.025],[0.328,-0.23,-1.424,-0.644,-1.478,-1.506,0.562,0.115,0.636,-0.224,-2.309,1.292,-1.416,0.943,1.09,0.685,0.876,0.274,0.163,-0.464,0.437],[1.041,0.146,0.134,-0.646,-0.47,-1.007,0.292,-0.063,-0.924,0.052,-1.337,1.718,-0.566,1.451,1.435,-0.656,0.683,-0.288,-1.576,0.238,0.741],[0.222,-0.18,-0.473,-0.717,0.264,0.086,-0.328,-0.677,-1.14,-0.197,1.093,-0.29,-0.08,0.486,0.818,0.777,-0.595,-0.777,0.404,-1.269,0.397],[-0.417,-0.224,0.66,1.17,-0.923,-0.945,1.969,0.363,0.334,-0.361,-0.719,-0.14,-0.04,-0.659,2.327,0.533,0.89,0.4,0.378,-2.041,0.806],[-0.031,-0.072,-0.454,1.197,-1.381,0.744,0.27,-0.35,0.363,0.169,0.255,0.096,0.888,-1.027,-2.571,-0.367,0.501,-0.115,0.669,0.084,-0.792],[-0.64,-0.028,-0.548,-0.963,0.14,0.676,2.775,-0.89,0.629,0.76,-1.584,-0.461,0.107,-1.003,1.057,-1.026,-1.107,-0.506,0.048,-0.022,0.827],[-0.182,0.254,-0.34,-1.118,-0.478,0.61,-0.091,-0.354,-0.562,0.052,-2.747,0.096,-0.679,0.757,0.98,0.483,0.932,-0.367,-0.015,-1.499,-0.639],[0.922,0.397,0.32,0.28,-1.332,-1.255,0.133,0.172,0.852,0.832,0.567,1.128,-1.285,-1.43,3.757,-0.507,0.395,0.784,-0.362,-1.194,0.816],[0.844,0.219,1.531,1.13,-1.04,-0.564,-0.152,-1.894,-1.267,0.147,-0.11,0.264,-0.833,-0.664,-0.607,0.694,-0.967,-1.156,-0.978,1.327,-1.34],[-0.198,-0.433,1.025,1.366,-0.087,0.543,0.032,0.535,0.999,-0.439,1.677,0.409,-1.35,-0.746,2.057,-0.318,1.604,-0.65,0.263,0.044,-0.368],[-0.602,-0.247,0.223,0.462,-0.126,0.335,-2.652,0.611,-0.297,0.223,0.421,0.446,-1.202,0.751,0.622,1.005,0.566,-0.43,0.771,1.494,-0.58],[1.122,-0.134,0.602,-0.86,-1.678,-0.419,-1.138,-0.497,-0.767,2.219,-0.331,-1.827,-1.611,1.486,0.294,1.205,-0.095,-0.978,0.573,-0.587,0.241],[-1.142,-0.055,0.991,0.59,-1.186,0.666,1.829,-0.381,1.244,-0.294,0.273,1.191,-0.183,0.093,0.705,-1.419,-0.899,0.137,1.052,-0.498,-2.011],[-1.055,-0.049,1.513,-0.005,-2.226,0.232,1.438,0.547,0.254,0.506,-2.266,-0.455,1.069,-0.63,-0.238,0.187,-0.246,-0.25,1.252,-0.619,-0.08]],"Whh":[[-0.005,0.279,-0.641,0.723,0.178,-0.304,0.328,-0.023,-0.09,-0.425,0.223,-0.126,-0.257,0.069,0.135,-0.3,-0.34,-0.363,-0.022,-0.183,0.669,-0.145,0.004,0.29,0.338,-1.219,0.452,1.059,-0.037,0.395,0.107,-0.385],[-1.25,-0.166,0.924,-0.234,0.261,-0.119,0.37,0.345,0.102,0.187,-1.231,-0.169,0.091,0.428,0.353,-0.025,-0.271,-0.308,-0.24,0.469,-0.099,-0.429,0.256,-0.026,0.395,0.356,-0.453,0.028,0.872,-0.192,-0.106,0.173],[0.328,-0.734,-0.209,0.541,0.137,0.27,0.758,-0.47,-0.572,-0.127,-0.561,-0.143,-0.277,-0.038,0.268,0.282,-0.119,0.588,0.131,0.977,0.273,0.299,-0.243,-0.084,0.7,-0.349,-0.376,-0.264,-0.382,0.001,-0.699,-0.452],[-0.091,-0.74,0.341,0.057,-1.334,-0.052,0.123,-0.281,-0.632,0.236,-0.199,0.486,0.015,-0.677,0.645,-0.375,-0.072,0.43,-0.255,-0.857,0.254,-0.041,0.404,0.133,-0.045,-0.94,0.748,0.681,0.119,-0.634,1.27,-0.008],[0.214,0.512,0.339,-0.282,-0.529,-0.281,0.211,-0.67,-0.919,-0.234,0.049,-0.188,-0.492,0.051,0.592,0.587,-0.628,-0.085,0.089,0.734,-0.113,-0.347,-0.236,-0.082,-0.187,-0.433,0.57,-0.022,-0.151,-0.313,0.019,0.121],[0.923,-0.544,0.273,0.497,-0.221,0.253,0.57,-0.116,0.415,-0.3,-0.279,-0.103,0.041,-0.406,-0.056,-0.339,0.021,-0.112,0.623,0.064,0.524,0.115,0.016,0.285,0.202,0.035,-0.061,0.489,-0.701,-0.572,0.098,0.663],[0.023,-0.078,-0.321,-0.081,-0.536,0.117,-0.509,-0.103,0.216,-0.462,0.58,-0.048,-0.168,0.059,0.438,-0.982,0.345,-0.871,-0.317,0.436,0.001,0.29,0.328,-0.688,-0.17,-0.012,0.401,-0.471,0.236,-0.033,-0.829,-0.102],[-0.131,0.503,0.062,-0.033,-0.126,0.068,0.88,-0.85,-0.161,0.251,0.151,-0.637,0.757,-0.112,0.642,-0.371,0.746,0.009,0.116,0.889,0.086,-0.221,-0.684,0.547,0.136,0.151,-0.006,0.053,0.105,0.008,-1.325,-0.026],[-0.151,-0.526,0.479,0.62,0.422,-0.091,0.359,0.08,-0.178,-0.671,-0.278,-0.1,0.011,-0.046,0.68,-0.277,-0.6,-0.248,0.236,0.475,0.033,0.774,-0.105,-0.046,0.074,1.365,0.171,1.082,0.599,0.175,-0.116,0.23],[0.666,0.063,-0.334,0.136,-0.438,-0.09,0.28,-0.256,1.079,0.52,0.027,-0.556,0.324,-0.5,-0.785,0.9,-0.234,-1.095,0.279,0.391,-0.271,-0.082,-0.288,-0.074,0.257,0.329,0.264,-0.442,0.294,-0.415,0.91,0.139],[0.372,-0.212,-0.122,0.491,0.366,-0.008,0.356,0.249,-0.057,0.757,0.145,0.003,-0.266,-0.144,-0.867,0.12,-0.023,-0.151,0.179,0.065,0.014,0.867,0.617,-1.103,-0.429,-0.298,0.076,0.416,0.373,0.125,0.407,-0.256],[1.072,-0.302,-0.06,-0.099,0.763,0.071,-0.79,1.117,0.353,-0.332,-0.907,-0.889,0.621,0.314,0.215,0.53,-0.171,0.191,-0.158,-0.605,0.411,0.336,0.503,-0.247,0.239,-0.091,0.001,-0.713,-0.187,-0.025,-0.017,0.006],[0.298,0.415,-0.287,-0.228,0.267,0.195,-0.08,-0.625,0.356,-0.212,-0.191,0.883,-0.322,0.32,-0.261,0.181,-0.206,0.049,0.388,0.086,-0.227,0.211,-0.145,0.067,0.055,0.203,0.216,-0.201,-0.29,0.139,0.421,0.135],[0.277,-0.209,-0.417,0.333,-0.473,-0.538,-0.489,0.111,-0.388,0.346,-0.194,0.101,0.21,0.465,0.378,0.356,0.051,-0.089,0.002,-0.633,-0.164,-0.731,0.358,0.982,-0.015,0.404,0.195,-0.016,0.033,0.378,-0.394,0.673],[-0.095,0.154,-0.607,-0.317,-0.718,0.289,0.018,-0.146,0.011,-0.363,0.805,0.376,-0.331,0.198,-0.471,-0.345,-0.327,-0.122,-0.809,0.013,0.185,0.309,-0.338,-0.655,-0.113,-0.129,-0.333,0.032,0.173,0.039,-0.212,0.173],[-0.376,0.034,0.193,-0.049,-0.004,-0.337,0.603,-0.191,0.01,-0.467,-0.206,-0.684,-0.369,-0.394,1.197,0.245,0.746,-0.202,0.211,-0.557,-0.58,0.679,0.036,-0.106,0.317,-0.014,-0.474,-0.202,0.186,-0.245,1.21,0.035],[-0.358,-0.105,-1.003,-0.41,-0.166,-0.146,0.736,0.63,0.127,-0.398,-0.38,0.206,-0.63,-0.048,-0.146,-0.483,-0.895,0.977,-0.688,-0.342,0.089,0.546,0.093,0.648,0.6,-0.4,-0.092,0.409,0.198,0.081,0.872,-0.293],[0.311,-0.724,-0.437,0.418,-0.536,-0.88,-0.037,0.153,0.102,0.43,0.193,-0.308,-0.004,-0.491,-0.223,0.042,0.38,0.039,0.436,0.578,-0.24,-0.244,0.665,-0.055,-0.551,-0.619,-0.684,-0.148,0.509,0.56,0.418,-0.105],[-0.059,0.111,-0.265,0.371,0.193,-0.62,-0.081,-0.206,-0.364,-0.22,0.241,-0.038,-0.111,0.959,-0.048,-0.139,0.113,-0.164,0.309,-0.251,-0.667,-0.729,-0.086,-0.564,0.41,-0.692,0.338,-0.475,0.075,0.188,0.118,-0.655],[-0.143,-0.198,-0.804,0.465,0.287,0.413,-0.241,0.552,0.188,-0.107,-0.078,0.333,-0.732,-0.244,0.385,-0.244,0.331,-0.46,0.86,-0.003,0.549,-0.819,0.704,-0.289,-1.036,-0.217,-0.107,0.329,0.609,-0.179,0.244,0.056],[0.63,-0.173,0.534,-0.319,-0.026,-0.025,-0.587,-0.305,-0.518,0.017,-0.315,0.284,-0.441,0.277,-0.072,-0.478,1.038,-0.459,-0.118,0.33,0.997,0.752,-0.163,0.473,-0.539,0.244,0.391,0.333,-0.328,0.195,-0.224,0.168],[-0.501,0.034,-0.063,-0.532,0.243,0.469,0.129,-0.012,0.07,-0.194,-0.006,0.772,0.529,0.167,-0.939,-0.127,-0.474,-1.187,0.215,-0.067,0.75,0.068,-0.136,-0.051,-0.308,0.594,0.262,-0.373,-0.657,0.07,-0.418,-0.486],[0.904,-0.116,0.47,-0.294,-0.68,0.184,-0.629,-0.159,-0.692,1.073,-0.202,0.183,0.396,0.105,0.432,-0.253,0.076,-0.343,-0.296,-0.275,-0.45,0.516,-0.232,-0.276,0.179,0.224,0.18,-0.538,0.232,-0.295,0.589,-0.821],[0.597,0.426,0.859,0.764,0.24,0.093,0.188,-0.317,0.277,-0.851,-0.221,0.141,-0.871,0.912,-0.107,-0.388,-0.034,0.254,0.187,0.705,0.078,0.081,0.646,-0.256,-0.119,-0.034,-0.314,-0.17,-0.226,-0.91,0.768,0.575],[0.422,-0.378,-0.228,-0.192,0.283,-0.81,-0.364,-0.025,-0.148,0.13,0.838,0.543,-0.053,0.334,-0.846,-0.278,0.231,-0.052,0.996,-0.003,-0.352,0.198,0.008,-0.093,0.049,0.357,-0.062,-0.201,0.224,0.717,-1.096,-0.053],[0.152,0.204,0.073,-0.045,0.042,0.225,0.539,0.454,-0.947,0.059,-0.611,0.142,0.144,0.241,-0.548,-0.196,-0.049,0.142,0.242,0.5,-0.064,0.377,-0.45,-0.826,0.252,-0.022,0.143,0.238,0.141,-0.355,-0.36,-0.384],[-0.285,-0.192,0.128,-0.312,1.12,-0.103,0.337,-0.576,0.02,0.32,-0.11,0.63,0.616,0.428,0.066,0.653,0.101,-0.283,-0.66,0.324,0.709,-0.179,0.558,0.03,0.212,0.206,0.2,-0.889,0.718,-0.482,-0.4,-0.714],[0.404,0.085,-0.157,0.206,-0.661,0.398,-0.026,-0.353,0.185,-0.19,-0.327,-0.594,0.625,-0.136,-0.495,0.4,0.155,0.932,-0.334,-0.034,-0.183,-0.206,0.416,-0.167,-1.016,0.269,0.082,0.289,-0.03,0.038,0.379,-0.1],[0.227,-0.514,0.017,-0.78,-0.102,0.685,0.514,0.348,0.34,0.083,-0.157,-0.402,-0.01,-0.782,0.265,0.502,-0.033,0.257,0.205,-0.183,0.115,-0.405,-0.828,-0.325,0.269,-0.106,-0.169,0.238,-0.157,-0.62,0.646,-0.176],[-0.556,0.675,-0.233,0.579,-0.218,0.481,0.497,0.478,0.075,0.743,0.099,0.891,-0.555,-0.525,0.326,-0.198,-0.172,-0.422,0.07,0.042,-0.211,0.234,0.42,-0.074,-0.332,-0.318,0.191,-0.473,0.139,-0.11,0.172,0.446],[-0.041,-0.095,-0.58,0.81,-0.106,-0.176,0.37,-0.373,0.513,0.261,0.011,-0.334,0.251,0.515,0.45,0.034,0.039,0.237,-0.061,-0.193,-0.02,0.101,0.385,-0.43,0.25,0.02,-0.074,0.525,-0.795,-0.429,-0.108,0.485],[0.354,-0.624,0.428,0.506,-0.212,0.224,0.831,-0.263,0.096,0.227,0.396,0.134,-0.244,0.653,0.139,0.114,0.025,-0.21,-0.129,0.951,0.161,-0.129,-0.589,-0.773,-0.405,0.163,-0.219,0.394,0.088,-0.914,0.305,-0.476]],"bh":[-0.246,0.434,-0.173,-0.475,-0.268,-0.022,-0.004,-0.222,0.077,0.39,-0.153,-0.685,0.173,0.013,-0.066,0.27,0.036,0.473,-0.076,0.39,-0.392,-0.001,0.278,-0.417,-0.347,0.396,-0.542,0.098,0.267,-0.153,0.003,-0.169],"Why":[[-3.72,1.306,-0.299,1.803,2.095,-0.204,-3.498,-1.753,-0.611,1.354,-2.342,3.017,-1.269,0.793,0.412,1.764,2.892,-0.436,-2.431,-4.356,0.44,-0.577,0.021,-1.658,-1.15,1.894,-3.951,-0.354,1.426,-4.107,-3.726,-4.223],[1.715,3.048,0.287,3.884,2.897,-1.744,0.239,-1.708,-0.617,1.637,2.878,-3.351,-2.479,-1.363,2.294,-2.697,0.762,2.586,-2.286,0.604,-0.836,-2.653,-2.041,0.602,-1.757,-0.486,-1.268,-1.565,1.559,0.905,-0.214,1.354],[0.239,1.462,0.114,-2.123,-3.009,-0.135,3.976,0.003,1.792,-1.907,-0.123,0.188,-0.436,2.099,0.715,-1.264,2.728,0.765,-1.477,-1.386,0.063,2.018,1.323,-1.851,-1.283,2.157,2.757,-0.126,-1.117,-0.741,-0.876,-1.483],[1.783,-0.744,-0.307,2.657,-0.079,2.449,-0.612,0.404,2.125,-0.36,1.428,0.292,0.764,0.764,1.748,-1.092,-0.66,-0.083,0.092,-0.065,1.973,1.872,-0.766,-0.527,0.119,-1.661,1.93,-0.543,-0.93,0.152,-1.907,-0.019],[-0.957,-0.895,3.628,3.928,-2.974,1.429,-2.066,0.862,2.248,-2.417,0.928,-0.15,-0.397,-0.351,-1.487,0.168,-0.095,0.71,-0.888,0.127,2.545,-0.532,1.94,0.868,1.892,-1.453,-0.187,0.838,2.117,-3.116,0.646,2.776],[0.608,-0.839,4.055,-0.783,2.235,-1.458,1.189,0.373,1.042,1.835,3.08,-1.117,-2.71,-0.85,3.013,1.741,-1.925,0.209,-0.202,-0.155,-1.575,-0.666,1.891,-0.653,0.109,1.153,-2.939,2.84,-0.134,-1.521,3.184,3.29],[-0.4,-0.622,0.536,5.934,0.599,3.328,0.139,2.247,0.093,3.133,0.368,-2.777,0.465,0.133,-3.798,-3.771,-0.72,-1.272,1.452,3.618,0.991,0.766,0.546,3.576,1.15,0.258,0.816,-1.336,-1.932,-0.858,-0.107,0.696],[-1.454,-0.9,0.085,-0.953,-0.185,-0.388,-0.602,-2.105,0.767,-2.733,-0.288,-1.762,2.827,1.5,-0.444,-1.949,0.28,0.456,-2.803,-0.124,1.954,-1.417,1.697,0.458,-0.348,-0.038,-1.344,0.227,-1.58,0.144,-0.372,0.715],[-1.001,1.581,1.367,0.885,3.705,3.455,3.552,-0.862,0.062,2.946,0.937,-0.956,2.518,0.533,-3.18,-0.087,-5.103,1.819,0.472,-1.606,-2.593,-0.432,-0.411,-1.491,-2.651,1.223,0.386,-1.591,-1.691,-2.378,-0.642,-2.08],[-1.119,3.378,-0.588,3.861,4.131,0.872,1.247,-0.168,-0.559,-2.006,-4.252,-2.896,0.628,2.15,-0.685,3.859,-1.931,-3,1.526,-4.336,1.182,1.741,2.225,3.713,-2.302,-0.171,0.048,-2.395,-3.628,-2.509,0.543,1.252],[-1.63,1.673,-1.717,-1.309,-1.544,-0.59,2.819,0.689,0.687,-0.5,-0.859,0.415,1.45,0.401,-0.284,0.253,2.012,-1.507,-2.308,2.6,-0.424,-1.385,0.969,0.606,-2.789,-1.043,-1.387,1.123,0.431,2.724,0.388,-0.832],[-1.487,-2.58,-2.323,0.276,-1.584,1.134,2.384,-1.735,-0.726,-0.488,-0.563,-0.788,2.531,-0.288,-0.287,2.184,2.285,-2.357,3.738,-0.47,-2.272,-1.09,-1.861,-1.624,3.89,0.1,0.57,-0.239,-1.544,3.271,1.228,-1.818],[-0.002,-4.19,-2.599,0.027,-0.969,3.866,-3.043,-0.6,-4.41,-0.197,-0.229,3.821,3.279,2.244,-1.566,0.854,0.906,1.181,0.899,-0.049,0.326,-2.865,-0.179,0.946,2.491,-0.414,-2.041,2.264,1.068,1.002,4.074,1.617],[1.966,-0.452,-0.993,-3.269,0.755,-2.274,-0.39,-1.521,1.914,1.885,2.674,-0.505,-2.377,-1.59,0.921,-1.386,-2.052,2.924,2.972,1.964,-0.513,2.658,-1.624,0.614,2.359,3.204,0.138,-0.161,-0.716,0.602,-0.267,-1.432],[0.238,1.977,-0.987,-1.165,-1.45,0.765,-1.881,-0.56,1.143,1.124,1.242,2.34,0.686,-0.937,2.151,-3.317,-0.195,-0.805,2.968,-1.336,3.242,-0.115,1.832,1.352,-1.089,-1.249,0.041,1.372,1.377,0.942,-1.414,1.921],[0.626,2.742,1.221,0.215,-2.663,1.835,-2.626,3.722,0.253,3.263,1.631,-0.08,-0.977,-2.469,-2.046,2.971,0.228,1.913,0.749,0.234,-0.217,-1.757,-1.356,-0.722,0.83,1.235,2.348,-1.528,1.528,3.77,-0.556,2.168],[0.757,-2.536,2.977,0.3,0.974,1.556,-0.91,-1.3,0.505,1.547,1.604,1.877,0.322,0.926,-1.238,-0.923,-0.074,-0.265,1.853,-0.766,2.048,1.875,0.276,1.297,0.788,-3.363,4.6,-0.524,-0.798,-0.359,1.105,-1.211],[0.728,-2.431,-1.559,-1.599,0.744,-2.373,0.793,-0.073,-2.529,-0.685,-0.29,2.349,1.003,-1.803,1.74,-0.604,-2.294,-2.652,-3.068,0.263,0.204,1.727,-1.628,0.948,-0.429,-2.187,2.82,0.841,-0.185,-0.585,0.919,2.65],[3.552,-2.947,0.056,-2.105,-0.956,0.355,-1.918,3.019,1.055,1.279,-2.032,-1.9,1.332,-2.983,0.098,-2.279,2.734,-1.237,-1.445,-2.41,2.264,2.476,-2.363,1.238,2.27,-1.816,-1.241,-0.648,-0.714,-1.985,-2.262,-1.303],[-1.822,-1.025,0.393,-2.132,-1.483,-0.278,0.533,1.025,-1.558,-0.157,-1.584,0.463,2.078,1.444,-2.059,-1.226,-1.195,0.769,0.366,2.967,0.197,-0.366,-0.234,-0.594,1.214,-1.855,1.619,-1.82,1.571,0.566,-1.34,-1.627],[1.132,1.228,-1.192,1.097,1.329,-1.045,-1.687,2.386,-1.297,-3.419,-3.528,-1.207,-4.136,-0.039,-1.802,1.255,-0.72,-0.707,3.822,-0.839,-0.981,-1.793,1.945,-0.857,0.718,0.996,1.312,1.389,1.348,3.026,-0.825,0.077]],"by":[-3.016,-4.377,-1.685,8.676,-4.558,-1.903,-5.009,-2.681,-4.339,-3.824,-2.298,-2.877,-3.973,-1.834,-5.277,-2.507,9.369,7.983,-4.513,-2.793,-4.418]};
+  var VOCAB = W.vocab, V = VOCAB.length, H = W.H, SENTENCES = W.sentences;
+  var ixOf = function(c){ return VOCAB.indexOf(c); };
+  var show = function(c){ return c === ' ' ? '␣' : c; };
+
+  var typedEl = document.getElementById('typed');
+  var autoTimer = null;
+
+  function clamp(v,a,b){ return Math.min(b, Math.max(a, v)); }
+  function hexToRgb(h){ h = h.replace('#',''); return [parseInt(h.substr(0,2),16), parseInt(h.substr(2,2),16), parseInt(h.substr(4,2),16)]; }
+  function lerpHex(h1,h2,t){
+    var a = hexToRgb(h1), b = hexToRgb(h2);
+    return 'rgb(' + Math.round(a[0]+(b[0]-a[0])*t) + ',' + Math.round(a[1]+(b[1]-a[1])*t) + ',' + Math.round(a[2]+(b[2]-a[2])*t) + ')';
+  }
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  function fmt(v){ return (v >= 0 ? ' ' : '') + v.toFixed(2); }
+
+  function weightColor(v, maxAbs){
+    var t = clamp(Math.abs(v)/maxAbs, 0, 1);
+    return lerpHex(css('--track'), v >= 0 ? css('--copper') : css('--cool'), t);
+  }
+  var WXH_MAX = (function(){
+    var m = 0;
+    for (var i = 0; i < H; i++) for (var j = 0; j < V; j++) m = Math.max(m, Math.abs(W.Wxh[i][j]));
+    return m;
+  })();
+
+  // The blank hidden state is a trained position too: it is what the keyboard
+  // answers from before you have typed anything, so it suggests sentence openers.
+  function runPrefix(text){
+    var h = new Array(H).fill(0), last = -1, atBoundary = false;
+    for (var t = 0; t < text.length; t++){
+      var x = ixOf(text[t]);
+      if (x < 0) continue;
+      // A period is a sentence boundary. The network never consumed one during
+      // training — every sentence began from a blank state — so rather than feed
+      // it into an untrained state we reset, which is exactly the training setup.
+      if (text[t] === '.'){ h = new Array(H).fill(0); last = x; atBoundary = true; continue; }
+      // People type a space after the period; no training sentence ever started
+      // with one, so it is skipped rather than fed into the fresh state.
+      if (atBoundary && text[t] === ' ') continue;
+      atBoundary = false;
+      last = x;
+      h = stepHidden(h, x);
+    }
+    return { h: h, last: last, atBoundary: atBoundary };
+  }
+  function probsFrom(h){
+    var y = new Array(V);
+    for (var k = 0; k < V; k++){
+      var a = W.by[k];
+      for (var i = 0; i < H; i++) a += W.Why[k][i]*h[i];
+      y[k] = a;
+    }
+    var m = Math.max.apply(null, y), ex = y.map(function(q){ return Math.exp(q-m); });
+    var s = ex.reduce(function(a,b){ return a+b; }, 0);
+    return ex.map(function(e){ return e/s; });
+  }
+  function stepHidden(h, x){
+    var next = new Array(H);
+    for (var i = 0; i < H; i++){
+      var a = W.Wxh[i][x] + W.bh[i];
+      for (var j = 0; j < H; j++) a += W.Whh[i][j]*h[j];
+      next[i] = Math.tanh(a);
+    }
+    return next;
+  }
+  function pick(p, sample){
+    var best = p.indexOf(Math.max.apply(null, p));
+    if (!sample) return best;
+    var r = Math.random(), acc = 0;
+    for (var k = 0; k < p.length; k++){ acc += p[k]; if (r <= acc) return k; }
+    return best; // softmax summed a hair under r; fall back to the likeliest, not the last
+  }
+
+  // ---------------------------------------------------------------- forks
+  // Derived from the corpus itself rather than hand-listed, so the panel can
+  // never drift out of step with what the network was actually shown.
+  var FORKS = (function(){
+    var byPrefix = new Map();
+    SENTENCES.forEach(function(s){
+      for (var t = 0; t < s.length; t++){
+        var pre = s.slice(0, t);
+        if (!byPrefix.has(pre)) byPrefix.set(pre, []);
+        byPrefix.get(pre).push(s[t]);
+      }
+    });
+    var out = [];
+    byPrefix.forEach(function(targets, pre){
+      var counts = {};
+      targets.forEach(function(c){ counts[c] = (counts[c] || 0) + 1; });
+      var keys = Object.keys(counts);
+      if (keys.length > 1){
+        out.push({
+          prefix: pre,
+          split: keys.sort().map(function(c){
+            return show(c) + ' ' + Math.round(100*counts[c]/targets.length) + '%';
+          }).join(' / ')
+        });
+      }
+    });
+    return out.sort(function(a,b){ return a.prefix.length - b.prefix.length; });
+  })();
+
+  // ---------------------------------------------------------------- static rail
+  (function buildRail(){
+    var list = document.getElementById('sentence-list');
+    SENTENCES.forEach(function(s){
+      var el = document.createElement('div');
+      el.className = 'sentence'; el.textContent = s;
+      list.appendChild(el);
+    });
+    document.getElementById('sent-tag').textContent = SENTENCES.length + ' sentences';
+    document.getElementById('loss-stat').innerHTML =
+      'Final loss <b>' + W.loss.toFixed(4) + '</b> against a theoretical floor of <b>' + W.floor.toFixed(4) +
+      '</b>. With ' + FORKS.length + ' places where the sentences disagree, no model starting each one blank ' +
+      'can score better — so the leftover loss <b>is</b> the branching, not error.';
+
+    var spaceForks = FORKS.filter(function(f){ return f.prefix.slice(-1) === ' '; }).length;
+    document.getElementById('space-stat').innerHTML =
+      '<b>' + spaceForks + '</b> of these forks end on the very same space key — same one-hot, same column of ' +
+      'W<sub>xh</sub> — and still split differently. The embedding says <b>which key</b>; ' +
+      'h<sub>t-1</sub> says <b>where you are</b>.';
+
+    document.getElementById('vbits').textContent = V;
+    document.getElementById('vcount').textContent = V;
+    document.getElementById('hcount').textContent = H;
+    document.getElementById('hcount2').textContent = H;
+    document.getElementById('vcount2').textContent = V;
+    document.getElementById('spec-sents').textContent = SENTENCES.length;
+    document.getElementById('spec-chars').textContent = SENTENCES.join('').length;
+    document.getElementById('spec-v').textContent = V;
+    document.getElementById('spec-h').textContent = H;
+    document.getElementById('spec-loss').textContent = W.loss.toFixed(4);
+
+    var forkHost = document.getElementById('fork-list');
+    document.getElementById('fork-tag').textContent = FORKS.length + ' points';
+    FORKS.forEach(function(f){
+      var b = document.createElement('button');
+      b.className = 'fork-btn';
+      var label = f.prefix === '' ? '(sentence start)' : '“' + f.prefix.replace(/ /g, '␣') + '”';
+      b.innerHTML = '<span class="pre">' + label + '</span><span class="split">' + f.split + '</span>';
+      b.addEventListener('click', function(){
+        stopAuto(); typedEl.value = f.prefix; render(); typedEl.focus();
+      });
+      forkHost.appendChild(b);
+    });
+
+    var chipHost = document.getElementById('vocab-chips');
+    VOCAB.forEach(function(c){
+      var el = document.createElement('span');
+      el.className = 'chip'; el.textContent = show(c);
+      chipHost.appendChild(el);
+    });
+    document.getElementById('vocab-tag').textContent = V + ' characters';
+    document.getElementById('zero-stat').innerHTML =
+      '<b>' + (V-1) + '</b> of ' + V + ' bits are zero in every one-hot vector';
+  })();
+  var chipEls = Array.prototype.slice.call(document.querySelectorAll('#vocab-chips .chip'));
+
+  // ---------------------------------------------------------------- lookup figure
+  function gridTemplate(){ return '58px repeat(' + V + ', 22px)'; }
+
+  function renderMatrix(hot){
+    var block = document.getElementById('matrix-block');
+    block.innerHTML = '';
+    function addRow(label, build){
+      var row = document.createElement('div');
+      row.className = 'grid-row';
+      row.style.gridTemplateColumns = gridTemplate();
+      var lab = document.createElement('div');
+      lab.className = 'rlabel'; lab.innerHTML = label;
+      row.appendChild(lab);
+      for (var j = 0; j < V; j++) row.appendChild(build(j));
+      block.appendChild(row);
+    }
+    addRow('', function(j){
+      var c = document.createElement('div');
+      c.className = 'hcell' + (j === hot ? ' lit' : '');
+      c.textContent = show(VOCAB[j]);
+      return c;
+    });
+    addRow('x<sub>t</sub> =', function(j){
+      var c = document.createElement('div');
+      c.className = 'ocell' + (j === hot ? ' lit' : '');
+      c.textContent = hot < 0 ? '·' : (j === hot ? '1' : '0');
+      return c;
+    });
+    var sep = document.createElement('div');
+    sep.className = 'sep'; block.appendChild(sep);
+    for (var i = 0; i < H; i++){
+      (function(i){
+        addRow(i === 0 ? 'W<sub>xh</sub> =' : '', function(j){
+          var c = document.createElement('div');
+          c.className = 'wcell' + (j === hot ? ' lit' : '');
+          c.style.background = weightColor(W.Wxh[i][j], WXH_MAX);
+          c.title = (VOCAB[j] === ' ' ? 'space' : VOCAB[j]) + ', row ' + i + ' = ' + W.Wxh[i][j].toFixed(2);
+          return c;
+        });
+      })(i);
+    }
+  }
+
+  function renderEmbedding(hot){
+    var strip = document.getElementById('embed-strip');
+    strip.innerHTML = '';
+    var cap = document.createElement('div');
+    cap.className = 'embed-cap';
+    cap.textContent = hot < 0 ? 'no key yet' : '“' + show(VOCAB[hot]) + '” embedding';
+    strip.appendChild(cap);
+    var spacer = document.createElement('div');
+    spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
+    strip.appendChild(spacer);
+    for (var i = 0; i < H; i++){
+      var cell = document.createElement('div');
+      cell.className = 'ecell' + (hot < 0 ? ' empty' : '');
+      cell.textContent = hot < 0 ? '·' : fmt(W.Wxh[i][hot]);
+      strip.appendChild(cell);
+    }
+  }
+
+  function renderHiddenColumn(hv, blank){
+    var strip = document.getElementById('hidden-strip');
+    strip.innerHTML = '';
+    var cap = document.createElement('div');
+    cap.className = 'embed-cap';
+    cap.style.color = 'var(--ink-soft)';
+    cap.textContent = blank === 'reset' ? 'h — reset at .' : (blank ? 'h — blank' : 'h — state');
+    strip.appendChild(cap);
+    var spacer = document.createElement('div');
+    spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
+    strip.appendChild(spacer);
+    hv.forEach(function(v){
+      var cell = document.createElement('div');
+      cell.className = 'ecell state';
+      if (!blank){
+        cell.style.background = lerpHex(css('--track'), v >= 0 ? css('--copper') : css('--cool'), Math.abs(v));
+        cell.style.color = Math.abs(v) > 0.55 ? css('--paper-raised') : css('--ink');
+      }
+      cell.textContent = fmt(v);
+      strip.appendChild(cell);
+    });
+  }
+
+  function ranked(p, n){
+    return p.map(function(v,k){ return { k:k, v:v }; })
+            .sort(function(a,b){ return b.v - a.v; }).slice(0, n);
+  }
+
+  function renderProbColumn(p, halted){
+    var strip = document.getElementById('prob-strip');
+    strip.innerHTML = '';
+    var cap = document.createElement('div');
+    cap.className = 'embed-cap';
+    cap.style.color = halted ? 'var(--ink-soft)' : 'var(--good)';
+    cap.textContent = halted ? 'p — withheld' : 'p — ' + V + ' chars';
+    strip.appendChild(cap);
+    var spacer = document.createElement('div');
+    spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
+    strip.appendChild(spacer);
+    var best = halted ? -1 : p.indexOf(Math.max.apply(null, p));
+    for (var k = 0; k < V; k++){
+      var row = document.createElement('div');
+      row.className = 'prow' + (k === best ? ' best' : '');
+      var ch = document.createElement('span');
+      ch.className = 'pch'; ch.textContent = show(VOCAB[k]);
+      var v = document.createElement('span');
+      v.className = 'pval';
+      if (halted){ v.textContent = '·'; v.style.color = 'var(--ink-soft)'; }
+      else {
+        v.textContent = p[k].toFixed(2);
+        v.style.background = lerpHex(css('--track'), css('--good'), Math.min(1, p[k]));
+        v.style.color = p[k] > 0.55 ? css('--paper-raised') : css('--ink');
+      }
+      row.appendChild(ch); row.appendChild(v);
+      strip.appendChild(row);
+    }
+  }
+
+  function renderProbs(p){
+    var host = document.getElementById('prob-bars');
+    host.innerHTML = '';
+    ranked(p, 6).forEach(function(d, rank){
+      var row = document.createElement('div');
+      row.className = 'bar-row' + (rank === 0 ? ' is-top' : '');
+      row.innerHTML =
+        '<span class="bar-key">' + show(VOCAB[d.k]) + '</span>' +
+        '<span class="bar-track"><span class="bar-fill" style="width:' + (d.v*100).toFixed(2) + '%"></span></span>' +
+        '<span class="bar-val">' + (d.v*100).toFixed(1) + '%</span>';
+      host.appendChild(row);
+    });
+  }
+
+  function renderSuggestions(p){
+    var host = document.getElementById('suggest-row');
+    host.innerHTML = '';
+    var top3 = ranked(p, 3);
+    // A real split (nothing near-certain) is worth flagging — that is the fork.
+    var isSplit = top3[0].v < 0.9;
+    top3.forEach(function(d, rank){
+      var b = document.createElement('button');
+      b.className = 'suggest-key' + (rank === 0 ? ' top' : '') + (isSplit && d.v > 0.05 ? ' split' : '');
+      b.innerHTML = '<span class="k">' + show(VOCAB[d.k]) + '</span>' +
+                    '<span class="pct">' + (d.v*100).toFixed(1) + '%</span>';
+      b.setAttribute('aria-label', 'accept ' + (VOCAB[d.k] === ' ' ? 'space' : VOCAB[d.k]) +
+                     ', ' + (d.v*100).toFixed(1) + ' percent');
+      b.addEventListener('click', function(){ stopAuto(); accept(VOCAB[d.k]); });
+      host.appendChild(b);
+    });
+  }
+
+  // ---------------------------------------------------------------- typing
+  function sanitize(s){
+    return s.toLowerCase().split('').filter(function(c){ return ixOf(c) >= 0; }).join('');
+  }
+  function isEndOfSentence(text){ return text.slice(-1) === '.'; }
+
+  function showEndOfSentence(){
+    document.getElementById('suggest-row').innerHTML =
+      '<div class="eos-note" style="flex:1"><span class="stop">.</span>' +
+      '<span><b>End of sentence — no suggestion offered.</b> Every training example stops at a period, so ' +
+      'nothing was ever fitted past one. Keep typing and the keyboard picks straight back up: the state ' +
+      'resets to blank at the period, which is exactly how each sentence was trained.</span></div>';
+    document.getElementById('prob-bars').hidden = true;
+    var note = document.getElementById('eos-note');
+    note.hidden = false;
+    note.innerHTML = '<span class="stop">.</span><span>Withheld at a full stop. <b>.</b> was only ever a ' +
+      'target during training, never an input — type the first character of a new sentence to resume.</span>';
+  }
+  function accept(ch){
+    typedEl.value = typedEl.value + ch;
+    render();
+    typedEl.focus();
+  }
+
+  function render(){
+    var text = sanitize(typedEl.value);
+    if (text !== typedEl.value) typedEl.value = text;
+
+    var run = runPrefix(text);
+    var p = probsFrom(run.h);
+    var hot = run.last;
+
+    var eos = isEndOfSentence(text);
+
+    // The lookup itself stays live even at a full stop: "." has a one-hot and a
+    // column like any other key, and the state it produces is a real value.
+    renderMatrix(hot);
+    renderEmbedding(hot);
+    renderHiddenColumn(run.h, hot < 0 ? true : ((eos || run.atBoundary) ? 'reset' : false));
+    renderProbColumn(p, eos);
+    if (eos){
+      showEndOfSentence();
+    } else {
+      document.getElementById('prob-bars').hidden = false;
+      document.getElementById('eos-note').hidden = true;
+      renderProbs(p);
+      renderSuggestions(p);
+    }
+
+    chipEls.forEach(function(el, i){ el.classList.toggle('is-active', i === hot); });
+    document.getElementById('lookup-tag').textContent =
+      hot < 0 ? 'blank state — nothing typed' : 'x = ' + show(VOCAB[hot]);
+    // Ghost: where the top guess would lead, stopping at a full stop.
+    var ghost = '';
+    if (!eos){
+      var gh = run.h.slice();
+      for (var s = 0; s < 32; s++){
+        var gp = probsFrom(gh), best = gp.indexOf(Math.max.apply(null, gp));
+        ghost += VOCAB[best];
+        if (VOCAB[best] === '.') break;
+        gh = stepHidden(gh, best);
+      }
+    }
+    document.getElementById('ghost').textContent = ghost;
+    document.getElementById('btn-back').disabled = text.length === 0;
+    document.getElementById('btn-auto').disabled = eos;
+    document.getElementById('kb-tag').textContent = eos ? 'sentence finished'
+      : (text.length ? 'after ' + text.length + ' character' + (text.length === 1 ? '' : 's')
+                     : 'how a sentence starts');
+  }
+
+  // ---------------------------------------------------------------- autocomplete
+  function stopAuto(){
+    if (autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+    var btn = document.getElementById('btn-auto');
+    btn.classList.remove('is-active');
+    btn.textContent = 'Autocomplete';
+  }
+  function startAuto(){
+    if (isEndOfSentence(sanitize(typedEl.value))) return;
+    var btn = document.getElementById('btn-auto');
+    btn.classList.add('is-active');
+    btn.textContent = 'Stop';
+    var sample = document.getElementById('chk-sample').checked;
+    var added = 0, LIMIT = 60;
+    document.getElementById('kb-status').textContent = sample ? 'sampling…' : 'accepting top guess…';
+    autoTimer = setInterval(function(){
+      var run = runPrefix(sanitize(typedEl.value));
+      var k = pick(probsFrom(run.h), sample);
+      typedEl.value = typedEl.value + VOCAB[k];
+      added++;
+      render();
+      document.getElementById('kb-status').textContent =
+        (sample ? 'sampling… ' : 'accepting top guess… ') + '+' + added;
+      if (VOCAB[k] === '.' || added >= LIMIT){
+        stopAuto();
+        document.getElementById('kb-status').textContent = 'finished a sentence in ' + added + ' keystrokes';
+      }
+    }, 90);
+  }
+
+  typedEl.addEventListener('input', function(){ stopAuto(); render(); });
+  document.getElementById('btn-back').addEventListener('click', function(){
+    stopAuto(); typedEl.value = typedEl.value.slice(0, -1); render(); typedEl.focus();
+  });
+  document.getElementById('btn-clear').addEventListener('click', function(){
+    stopAuto(); typedEl.value = ''; document.getElementById('kb-status').textContent = ''; render(); typedEl.focus();
+  });
+  document.getElementById('btn-auto').addEventListener('click', function(){
+    if (autoTimer) stopAuto(); else startAuto();
+  });
+
+  // Open mid-sentence, one keystroke before a real fork.
+  typedEl.value = 'see you at the ';
+  render();
+})();
+</script>
