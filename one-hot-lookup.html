@@ -270,21 +270,8 @@
 </style>
 
 <div class="page">
-  <header class="top">
-    <div>
-      <div class="eyebrow">Character RNN · Predictive Text</div>
-      <h1>A one-hot times a matrix is just a column lookup</h1>
-      <p>Type below and the network guesses your next character, the way a phone keyboard does. Every keystroke enters as a <span id="vbits">20</span>-bit vector that is <em>all zeros but one</em> — so multiplying it by W<sub>xh</sub> can't do anything except pick out the column under that single 1. That column is the character's embedding.</p>
-    </div>
-    <div class="spec">
-      trained on <b id="spec-sents">5</b> sentences · <b id="spec-chars">108</b> characters<br>
-      <b class="mono" id="spec-v">20</b> vocab · <b class="mono" id="spec-h">24</b> hidden · loss <b class="mono" id="spec-loss">0.0745</b>
-    </div>
-  </header>
-
   <section class="panel keyboard">
-    <h2>Predictive keyboard <span class="tag" id="kb-tag">next character</span></h2>
-    <p class="hint">Type letters, a space or a period. Tap a suggestion to accept it, or hit Autocomplete and watch it finish a sentence one character at a time. A period ends the sentence — the network has nothing trained past it, so it stops there.</p>
+    <span class="tag" id="kb-tag"></span>
     <div class="type-field">
       <input id="typed" type="text" spellcheck="false" autocomplete="off" autocapitalize="off"
              aria-label="typed text" placeholder="start typing, or just hit Autocomplete…">
@@ -302,22 +289,7 @@
 
   <div class="rail">
     <section class="panel">
-      <h2>What it learned <span class="tag" id="sent-tag">5 sentences</span></h2>
-      <p class="hint">Each one is trained as its own sequence, starting from a blank hidden state.</p>
-      <div class="sentence-list" id="sentence-list"></div>
-      <div class="stat" id="loss-stat"></div>
-    </section>
-
-    <section class="panel">
-      <h2>Where it forks <span class="tag" id="fork-tag"></span></h2>
-      <p class="hint">At these prefixes the sentences disagree, so the model has to split its guess. Click one to jump there.</p>
-      <div class="fork-list" id="fork-list"></div>
-      <div class="stat" id="space-stat"></div>
-    </section>
-
-    <section class="panel">
-      <h2>Vocabulary <span class="tag" id="vocab-tag"></span></h2>
-      <p class="hint">Only the characters these sentences actually use. The lit chip is the one being looked up.</p>
+      <span class="tag" id="vocab-tag"></span>
       <div class="chips" id="vocab-chips"></div>
       <div class="stat" id="zero-stat"></div>
     </section>
@@ -325,8 +297,6 @@
 
   <section class="panel">
     <h2>The lookup <span class="tag" id="lookup-tag"></span></h2>
-    <p class="hint">The one-hot row sits directly above the W<sub>xh</sub> columns it indexes. Only the outlined column survives the multiply.</p>
-
     <div class="lookup">
       <div class="grid-block" id="matrix-block"></div>
       <div class="embed-strip" id="embed-strip"></div>
@@ -336,17 +306,14 @@
       <div class="prob-strip" id="prob-strip"></div>
     </div>
     <div class="lookup-formula">
-      h<sub>t</sub> = tanh( <b>embedding</b> + W<sub>hh</sub>·h<sub>t-1</sub> + b<sub>h</sub> ), then
-      p = softmax( W<sub>hy</sub>·h<sub>t</sub> + b<sub>y</sub> ). The looked-up column is one of three terms behind the
-      <span id="hcount">32</span>-unit state, which softmax turns into one probability per vocabulary character —
-      note the state is <span id="hcount2">32</span> long but p is <span id="vcount2">21</span>, a different space.
+      <span id="hcount">32</span>
+      <span id="hcount2">32</span>
+      <span id="vcount2">21</span>
     </div>
 
     <div class="stage">
-      <h3>Next-character distribution</h3>
-      <div class="formula">p<sub>t</sub> = softmax( W<sub>hy</sub>·h<sub>t</sub> + b<sub>y</sub> ) &nbsp;— top 6 of <span id="vcount">20</span></div>
+      <span id="vcount">20</span>
       <div class="bars" id="prob-bars"></div>
-      <div class="eos-note" id="eos-note" hidden></div>
     </div>
   </section>
 </div>
@@ -461,48 +428,6 @@
 
   // ---------------------------------------------------------------- static rail
   (function buildRail(){
-    var list = document.getElementById('sentence-list');
-    SENTENCES.forEach(function(s){
-      var el = document.createElement('div');
-      el.className = 'sentence'; el.textContent = s;
-      list.appendChild(el);
-    });
-    document.getElementById('sent-tag').textContent = SENTENCES.length + ' sentences';
-    document.getElementById('loss-stat').innerHTML =
-      'Final loss <b>' + W.loss.toFixed(4) + '</b> against a theoretical floor of <b>' + W.floor.toFixed(4) +
-      '</b>. With ' + FORKS.length + ' places where the sentences disagree, no model starting each one blank ' +
-      'can score better — so the leftover loss <b>is</b> the branching, not error.';
-
-    var spaceForks = FORKS.filter(function(f){ return f.prefix.slice(-1) === ' '; }).length;
-    document.getElementById('space-stat').innerHTML =
-      '<b>' + spaceForks + '</b> of these forks end on the very same space key — same one-hot, same column of ' +
-      'W<sub>xh</sub> — and still split differently. The embedding says <b>which key</b>; ' +
-      'h<sub>t-1</sub> says <b>where you are</b>.';
-
-    document.getElementById('vbits').textContent = V;
-    document.getElementById('vcount').textContent = V;
-    document.getElementById('hcount').textContent = H;
-    document.getElementById('hcount2').textContent = H;
-    document.getElementById('vcount2').textContent = V;
-    document.getElementById('spec-sents').textContent = SENTENCES.length;
-    document.getElementById('spec-chars').textContent = SENTENCES.join('').length;
-    document.getElementById('spec-v').textContent = V;
-    document.getElementById('spec-h').textContent = H;
-    document.getElementById('spec-loss').textContent = W.loss.toFixed(4);
-
-    var forkHost = document.getElementById('fork-list');
-    document.getElementById('fork-tag').textContent = FORKS.length + ' points';
-    FORKS.forEach(function(f){
-      var b = document.createElement('button');
-      b.className = 'fork-btn';
-      var label = f.prefix === '' ? '(sentence start)' : '“' + f.prefix.replace(/ /g, '␣') + '”';
-      b.innerHTML = '<span class="pre">' + label + '</span><span class="split">' + f.split + '</span>';
-      b.addEventListener('click', function(){
-        stopAuto(); typedEl.value = f.prefix; render(); typedEl.focus();
-      });
-      forkHost.appendChild(b);
-    });
-
     var chipHost = document.getElementById('vocab-chips');
     VOCAB.forEach(function(c){
       var el = document.createElement('span');
@@ -563,7 +488,7 @@
     strip.innerHTML = '';
     var cap = document.createElement('div');
     cap.className = 'embed-cap';
-    cap.textContent = hot < 0 ? 'no key yet' : '“' + show(VOCAB[hot]) + '” embedding';
+    cap.textContent = hot < 0 ? 'brak znaku' : 'reprezentacja “' + show(VOCAB[hot]) + '”';
     strip.appendChild(cap);
     var spacer = document.createElement('div');
     spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
@@ -578,11 +503,11 @@
 
   function renderHiddenColumn(hv, blank){
     var strip = document.getElementById('hidden-strip');
-    strip.innerHTML = '';
     var cap = document.createElement('div');
     cap.className = 'embed-cap';
     cap.style.color = 'var(--ink-soft)';
-    cap.textContent = blank === 'reset' ? 'h — reset at .' : (blank ? 'h — blank' : 'h — state');
+    cap.textContent = 'ukryty stan';
+    strip.innerHTML = '';
     strip.appendChild(cap);
     var spacer = document.createElement('div');
     spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
@@ -606,11 +531,11 @@
 
   function renderProbColumn(p, halted){
     var strip = document.getElementById('prob-strip');
-    strip.innerHTML = '';
     var cap = document.createElement('div');
     cap.className = 'embed-cap';
     cap.style.color = halted ? 'var(--ink-soft)' : 'var(--good)';
     cap.textContent = halted ? 'p — withheld' : 'p — ' + V + ' chars';
+    strip.innerHTML = '';
     strip.appendChild(cap);
     var spacer = document.createElement('div');
     spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
@@ -659,7 +584,7 @@
       b.className = 'suggest-key' + (rank === 0 ? ' top' : '') + (isSplit && d.v > 0.05 ? ' split' : '');
       b.innerHTML = '<span class="k">' + show(VOCAB[d.k]) + '</span>' +
                     '<span class="pct">' + (d.v*100).toFixed(1) + '%</span>';
-      b.setAttribute('aria-label', 'accept ' + (VOCAB[d.k] === ' ' ? 'space' : VOCAB[d.k]) +
+      b.setAttribute('aria-label', 'zaakceptuj ' + (VOCAB[d.k] === ' ' ? '_' : VOCAB[d.k]) +
                      ', ' + (d.v*100).toFixed(1) + ' percent');
       b.addEventListener('click', function(){ stopAuto(); accept(VOCAB[d.k]); });
       host.appendChild(b);
@@ -673,16 +598,8 @@
   function isEndOfSentence(text){ return text.slice(-1) === '.'; }
 
   function showEndOfSentence(){
-    document.getElementById('suggest-row').innerHTML =
-      '<div class="eos-note" style="flex:1"><span class="stop">.</span>' +
-      '<span><b>End of sentence — no suggestion offered.</b> Every training example stops at a period, so ' +
-      'nothing was ever fitted past one. Keep typing and the keyboard picks straight back up: the state ' +
-      'resets to blank at the period, which is exactly how each sentence was trained.</span></div>';
+    document.getElementById('suggest-row').innerHTML = '';
     document.getElementById('prob-bars').hidden = true;
-    var note = document.getElementById('eos-note');
-    note.hidden = false;
-    note.innerHTML = '<span class="stop">.</span><span>Withheld at a full stop. <b>.</b> was only ever a ' +
-      'target during training, never an input — type the first character of a new sentence to resume.</span>';
   }
   function accept(ch){
     typedEl.value = typedEl.value + ch;
@@ -710,14 +627,13 @@
       showEndOfSentence();
     } else {
       document.getElementById('prob-bars').hidden = false;
-      document.getElementById('eos-note').hidden = true;
       renderProbs(p);
       renderSuggestions(p);
     }
 
     chipEls.forEach(function(el, i){ el.classList.toggle('is-active', i === hot); });
     document.getElementById('lookup-tag').textContent =
-      hot < 0 ? 'blank state — nothing typed' : 'x = ' + show(VOCAB[hot]);
+      hot < 0 ? 'pusty stan — nic nie wpisano' : 'x = ' + show(VOCAB[hot]);
     // Ghost: where the top guess would lead, stopping at a full stop.
     var ghost = '';
     if (!eos){
@@ -732,9 +648,6 @@
     document.getElementById('ghost').textContent = ghost;
     document.getElementById('btn-back').disabled = text.length === 0;
     document.getElementById('btn-auto').disabled = eos;
-    document.getElementById('kb-tag').textContent = eos ? 'sentence finished'
-      : (text.length ? 'after ' + text.length + ' character' + (text.length === 1 ? '' : 's')
-                     : 'how a sentence starts');
   }
 
   // ---------------------------------------------------------------- autocomplete
@@ -751,18 +664,14 @@
     btn.textContent = 'Stop';
     var sample = document.getElementById('chk-sample').checked;
     var added = 0, LIMIT = 60;
-    document.getElementById('kb-status').textContent = sample ? 'sampling…' : 'accepting top guess…';
     autoTimer = setInterval(function(){
       var run = runPrefix(sanitize(typedEl.value));
       var k = pick(probsFrom(run.h), sample);
       typedEl.value = typedEl.value + VOCAB[k];
       added++;
       render();
-      document.getElementById('kb-status').textContent =
-        (sample ? 'sampling… ' : 'accepting top guess… ') + '+' + added;
       if (VOCAB[k] === '.' || added >= LIMIT){
         stopAuto();
-        document.getElementById('kb-status').textContent = 'finished a sentence in ' + added + ' keystrokes';
       }
     }, 90);
   }
@@ -772,7 +681,7 @@
     stopAuto(); typedEl.value = typedEl.value.slice(0, -1); render(); typedEl.focus();
   });
   document.getElementById('btn-clear').addEventListener('click', function(){
-    stopAuto(); typedEl.value = ''; document.getElementById('kb-status').textContent = ''; render(); typedEl.focus();
+    stopAuto(); typedEl.value = ''; render(); typedEl.focus();
   });
   document.getElementById('btn-auto').addEventListener('click', function(){
     if (autoTimer) stopAuto(); else startAuto();
