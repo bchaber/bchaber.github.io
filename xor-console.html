@@ -1,4 +1,6 @@
-<title>XOR Console</title>
+<html lang=pl>
+<meta charset="utf-8">
+<title>Wagi to pokrętła</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -228,72 +230,54 @@
 </style>
 
 <div class="page">
-  <header class="top">
-    <div>
-      <div class="eyebrow">Two Neurons · One Gate</div>
-      <h1>One straight line can't solve XOR</h1>
-      <p>Turn the nine weight knobs by hand — grouped tight, one cluster per neuron — and watch h₁, h₂ and ŷ light up for whichever input you're testing. Or hit <b class="mono" style="color:var(--copper)">Train</b> and let gradient descent find a setting on its own.</p>
-    </div>
-    <div class="spec">
-      architecture <b>2 → 2 → 1</b>, sigmoid throughout<br>
-      9 weights, 4 truth-table rows
-    </div>
-  </header>
-
   <div class="rail">
     <section class="panel">
-      <h2>Network <span class="tag">live response</span></h2>
-      <p class="hint">Click x₁ or x₂ to try an input — h₁, h₂ and ŷ are real LEDs, brightness = activation.</p>
+      <h2>Sieć neuronowa</h2>
       <div class="network-diagram" id="network-diagram">
         <svg class="net-wires" id="net-wires"></svg>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Weights <span class="tag">all 9 tunable</span></h2>
-      <p class="hint">Each knob is one weight; clusters group the two hidden neurons and the output neuron.</p>
+      <h2>Wagi sieci neuronowej</h2>
+      <p class="hint">Każde pokrętło to jedna waga; każdy neuron ma trzy pokrętła.</p>
       <div class="knob-clusters" id="knob-clusters"></div>
-      <label class="lock-toggle"><input type="checkbox" id="h2-disable"> disable h₂ (its weights zero out)</label>
+      <label class="lock-toggle"><input type="checkbox" id="h2-disable"> wyłącz drugi neuron ukryty</label>
       <div class="transport">
-        <button class="reset" id="btn-preset">Solved XOR</button>
-        <button class="reset" id="btn-scramble">Scramble</button>
-        <button class="reset" id="btn-train">Train</button>
+        <button class="reset" id="btn-preset">Rozwiązanie</button>
+        <button class="reset" id="btn-scramble">Pomieszaj</button>
+        <button class="reset" id="btn-train">Wytrenuj</button>
       </div>
       <div class="readout">
-        <span class="label">mean loss, ½Σ(y&minus;ŷ)²</span>
+        <span class="label">Błąd sieci neuronowej</span>
         <span class="value mono" id="loss-val">–</span>
       </div>
       <div class="train-status" id="train-status"></div>
     </section>
 
     <section class="panel">
-      <h2>Truth table</h2>
+      <h2>Tablica prawdy</h2>
       <div class="gate-switch" id="gate-switch">
-        <button class="reset gate-btn is-active" data-gate="XOR">XOR</button>
         <button class="reset gate-btn" data-gate="AND">AND</button>
         <button class="reset gate-btn" data-gate="OR">OR</button>
         <button class="reset gate-btn" data-gate="NAND">NAND</button>
+        <button class="reset gate-btn is-active" data-gate="XOR">XOR</button>
       </div>
       <table class="truth">
-        <thead><tr><th>x₁</th><th>x₂</th><th>target</th><th>h₁</th><th>h₂</th><th>ŷ</th><th>class</th><th></th></tr></thead>
+        <thead><tr><th>x₁</th><th>x₂</th><th>wg teorii</th><th>wg sieci</th><th></th></tr></thead>
         <tbody id="truth-body"></tbody>
       </table>
     </section>
   </div>
 
   <section class="panel plot-wrap">
-    <h2>Classification surface <span class="tag">41 × 41 grid</span></h2>
-    <p class="hint">y = swish-free sigmoid net over the input plane; the four training points are colored by residual, target minus prediction — same recipe as the companion <code style="font-family:inherit">minimal-approximator</code> page.</p>
+    <h2>Sieć neuronowa to przybliżenie funkcji</h2>
     <div id="xor-surface"></div>
     <div class="legend-row">
-      <span class="swatch"><span class="chip" style="background:var(--surface-gray)"></span> network surface</span>
-      <span class="swatch"><span class="legend-bar"></span> residual: blue = ŷ too high, red = ŷ too low</span>
+      <span class="swatch"><span class="chip" style="background:var(--surface-gray)"></span> sieć neuronowa</span>
+      <span class="swatch"><span class="legend-bar"></span> błąd</span>
     </div>
   </section>
-
-  <footer class="credit">
-    A hand-solvable 2→2→1 sigmoid network (the classic OR/NAND→AND decomposition of XOR). Reference implementation: companion <code>minimal-approximator</code> page, whose layout, palette and Plotly recipe this page reuses. Knob styling is a from-scratch reinterpretation of the physically-lit rotary controls at <code>ambientcss.vercel.app</code> — inlined here rather than loaded, since artifacts can only pull stylesheets from Google Fonts.
-  </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
@@ -524,7 +508,7 @@
     var t = clamp(v, 0, 1);
     el.lamp.style.background = 'radial-gradient(circle at 35% 30%, ' + lerpHex(css('--track'), css('--copper-ramp-a'), t) + ', ' + lerpHex(css('--track'), css('--copper'), t) + ')';
     el.lamp.style.boxShadow = (t > 0.05 ? '0 0 ' + (3+11*t) + 'px var(--copper-glow), ' : '') + 'inset 0 1px 3px rgba(0,0,0,.18)';
-    el.value.textContent = el.binary ? v.toFixed(0) : v.toFixed(2);
+    //el.value.textContent = el.binary ? v.toFixed(0) : v.toFixed(2);
   }
 
   function refreshDiagram(){
@@ -550,8 +534,7 @@
       tr.innerHTML =
         '<td>' + ex.x[0].toFixed(0) + '</td><td>' + ex.x[1].toFixed(0) + '</td>' +
         '<td>' + ex.t.toFixed(0) + '</td>' +
-        '<td>' + r.a1.toFixed(2) + '</td><td>' + r.a2.toFixed(2) + '</td>' +
-        '<td>' + r.ao.toFixed(3) + '</td><td>' + pred + '</td>' +
+        '<td>' + pred + '</td>' +
         '<td><span class="status-chip" style="background:' + (ok ? css('--good') : css('--bad')) + '"></span></td>';
       body.appendChild(tr);
     });
@@ -585,16 +568,20 @@
 
   function drawSurface(){
     var c = layoutColors();
+    var gray = css('--surface-gray');
     var residuals = computeResiduals();
     var maxAbs = Math.max(1e-6, Math.max.apply(null, residuals.map(Math.abs)));
     var surfaceTrace = {
       type: 'surface',
       x: surfXs, y: surfYs, z: computeSurfaceZ(),
-      colorscale: [[0, css('--surface-gray')], [1, css('--surface-gray')]],
-      showscale: false, opacity: 0.92,
-      contours: { z: { show:false } },
-      lighting: { ambient:0.75, diffuse:0.45, specular:0.1, roughness:0.7 },
-      hovertemplate: 'x₁ %{x:.2f}<br>x₂ %{y:.2f}<br>ŷ %{z:.3f}<extra></extra>'
+      colorscale: [[0, gray], [1, gray]],
+      showscale: false,
+      contours: {
+        z: { show:true, start: -1, end: 1, size: 0.05, color: "#888" }
+      },
+      // hidesurface: true,
+      opacity: 0.3,
+      lighting: { ambient:1.0, diffuse:0.4, specular:0.0, roughness:0.0 },
     };
     var dataTrace = {
       type: 'scatter3d', mode: 'markers',
@@ -605,12 +592,12 @@
         size: 5,
         color: residuals,
         colorscale: [[0, css('--err-neg')], [0.5, css('--err-mid')], [1, css('--err-pos')]],
-        cmid: 0, cmin: -maxAbs, cmax: maxAbs,
+        cmid: 0, cmin: -0.5, cmax: +0.5,
         line: { color: c.ink, width: 1 }
       },
       customdata: residuals,
-      hovertemplate: 'x₁ %{x:.0f}<br>x₂ %{y:.0f}<br>target %{z:.0f}<br>residual %{customdata:+.3f}<extra></extra>'
     };
+    console.info(residuals)
     var layout = {
       margin: { l:0, r:0, t:0, b:0 },
       paper_bgcolor: c.paper,
@@ -619,8 +606,11 @@
         xaxis: { title:'x₁', range:[SURF_LO,SURF_HI], color:c.inkSoft, gridcolor:c.line, zerolinecolor:c.line, backgroundcolor:c.paper },
         yaxis: { title:'x₂', range:[SURF_LO,SURF_HI], color:c.inkSoft, gridcolor:c.line, zerolinecolor:c.line, backgroundcolor:c.paper },
         zaxis: { title:'ŷ',  range:[0,1],              color:c.inkSoft, gridcolor:c.line, zerolinecolor:c.line, backgroundcolor:c.paper },
-        camera: { eye: { x:1.55, y:-1.65, z:0.85 } }
+        // camera: { eye: { x:1.55, y:-1.65, z:0.85 } },
+        camera: { eye: { x:0.3, y:-1.2, z: 0.5 }, center: {z: -0.2} },
+        aspectratio: { x: 1.0, y: 1.0, z: 0.5 }
       },
+      height: 400,
       font: { family:'IBM Plex Sans, sans-serif', color:c.ink, size:11 }
     };
     Plotly.react('xor-surface', [surfaceTrace, dataTrace], layout, { displayModeBar:false, responsive:true });
@@ -639,7 +629,7 @@
         // z included so a gate switch (XOR/AND/OR/NAND) moves the markers to
         // their new target height, not just recolors them at the old one.
         z: [EXAMPLES.map(function(ex){ return ex.t; })],
-        'marker.color': [residuals], 'marker.cmin': [-maxAbs], 'marker.cmax': [maxAbs], customdata: [residuals]
+        'marker.color': [residuals], customdata: [residuals]
       }, [1]);
     } catch (err) { /* surface plot unavailable; rest of the console still works */ }
   }
@@ -711,12 +701,12 @@
     redrawAll();
     var loss = currentLoss();
     document.getElementById('train-status').textContent =
-      'training… step ' + trainSteps + ', mean loss ' + loss.toFixed(4) +
-      (restartCount ? '  (restarted ' + restartCount + '× after stalling)' : '');
+      'trenowanie... krok ' + trainSteps + ', błąd ' + loss.toFixed(4) +
+      (restartCount ? '  (próba #' + restartCount + ' po utknięciu)' : '');
     if (loss < 0.005 || trainSteps >= TRAIN_MAX_STEPS){
       stopTraining(loss < 0.005
-        ? 'converged after ' + trainSteps + ' steps' + (restartCount ? ' (' + restartCount + ' restart' + (restartCount>1?'s':'') + ')' : '')
-        : 'stopped at step limit');
+        ? 'wytrenowano po ' + trainSteps + ' krokach ' + (restartCount ? ' (próbowano od nowa ' + restartCount + (restartCount == 1?' raz':'razy') + ')' : '')
+        : 'wykonano maksymalną liczbę kroków trenowania');
       return;
     }
     trainTimer = requestAnimationFrame(trainTick);
@@ -789,7 +779,7 @@
     applyState(next);
   });
   document.getElementById('btn-train').addEventListener('click', function(){
-    if (isTraining) stopTraining('stopped by user'); else startTraining();
+    if (isTraining) stopTraining('przerwano'); else startTraining();
   });
 
   applyState(PRESET_SOLVED);

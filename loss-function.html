@@ -1,4 +1,6 @@
-<title>Minimal Approximator</title>
+<html lang=pl>
+<meta charset="utf-8">
+<title>Funkcja straty</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -262,26 +264,14 @@
 </style>
 
 <div class="page">
-  <header class="top">
-    <div>
-      <div class="eyebrow">Minimal Approximator · Hagan Smart Sensor</div>
-      <h1>Two inputs, ten swish units, one number out</h1>
-      <p>A 2&nbsp;→&nbsp;10&nbsp;(swish)&nbsp;→&nbsp;1&nbsp;(linear) network, fit by BFGS to a two&#8209;sensor calibration curve. Drag the output weights below — they're the last linear combination before the answer.</p>
-    </div>
-    <div class="spec">
-      trained on <b>57</b> / held out <b>10</b> of <b>67</b> readings<br>
-      final mean loss <b class="mono">0.00007</b> · R² <b class="mono">0.9998</b> &nbsp;·&nbsp; full-batch Adam, α=0.05, 5000 epochs
-    </div>
-  </header>
-
   <div class="rail">
     <section class="panel">
       <div class="netmap" id="netmap"></div>
     </section>
 
     <section class="panel">
-      <h2>Output layer <span class="tag">Wo · bo — tunable</span></h2>
-      <p class="hint">Each slider is how strongly hidden unit <em>h<sub>i</sub></em> votes on the final estimate.</p>
+      <h2>Warstwa wyjściowa</h2>
+      <p class="hint">Suwak reguluje wartość wagi <em>h<sub>i</sub></em>.</p>
       <div id="sliders"></div>
       <div class="bias-row slider-row" style="grid-template-columns: 20px 30px 1fr 52px;">
         <span class="dot" style="background:var(--ink-soft)"></span>
@@ -289,42 +279,35 @@
         <input type="range" id="bo-slider" min="-2" max="2" step="0.01">
         <span class="val mono" id="bo-val"></span>
       </div>
-      <button class="reset" id="reset-btn">Reset to trained weights</button>
+      <button class="reset" id="reset-btn">Ustaw wyuczone wagi</button>
       <div class="readout">
-        <span class="label">mean loss over all 67 readings, ½Σ(y&minus;ŷ)²</span>
+        <span class="label">Błąd sieci neuronowej</span>
         <span class="value mono" id="loss-val">–</span>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Hidden layer <span class="tag">Wh · bh — fixed</span></h2>
-      <p class="hint">Feature detectors set once during training; not adjustable here.</p>
+      <h2>Warstwa ukryta</span></h2>
       <table class="fixed">
-        <thead><tr><th>unit</th><th>w(ν₁)</th><th>w(ν₂)</th><th>bias</th></tr></thead>
+        <thead><tr><th></th><th>w(ν₁)</th><th>w(ν₂)</th><th>b</th></tr></thead>
         <tbody id="fixed-body"></tbody>
       </table>
     </section>
   </div>
 
   <section class="panel plot-wrap">
-    <h2>Approximation surface <span class="tag" id="grid-tag">41 × 41 grid</span></h2>
-    <p class="hint">y = W<sub>o</sub>·swish(W<sub>h</sub>x + b<sub>h</sub>) + b<sub>o</sub>, evaluated over the normalized sensor plane.</p>
+    <h2>Sieć neuronowa, to przybliżenie funkcji</h2>
     <div id="surface"></div>
     <div class="legend-row">
-      <span class="swatch"><span class="chip" style="background:var(--surface-gray)"></span> network surface</span>
+      <span class="swatch"><span class="chip" style="background:var(--surface-gray)"></span>sieć neuronowa</span>
       <span class="swatch">
         <span>
           <span class="ramp-chip"></span>
           <span class="ramp-labels"><span>&minus;</span><span>0</span><span>+</span></span>
         </span>
-        measured readings (67), colored by residual y&minus;ŷ
       </span>
     </div>
   </section>
-
-  <footer class="credit">
-    Reference implementation: <code>minimal-approximator.jl</code> · dataset: <code>datasets/hagan_smart_sensor.jl</code> (Hagan case-study smart-sensor data, two-sensor calibration). Weights shown come from full-batch <b>Adam</b> (α=0.05, β₁=0.9, β₂=0.999, 5000 epochs, seed 0) — added and tried alongside the script's own optimizers. It beat full-batch BFGS run to convergence (mean loss 0.00007 vs. 0.00079) and both beat the script's stochastic BFGS default, <code>batch_size&nbsp;=&nbsp;1</code> (0.00735) — a ~100× spread across optimizer choices on the same architecture and data.
-  </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
@@ -402,7 +385,6 @@
     document.getElementById('netmap').appendChild(svg);
     var cap = document.createElement('div');
     cap.style.cssText = 'text-align:center;font-size:11px;color:var(--ink-soft);margin-top:-6px;font-family:"IBM Plex Mono",monospace;';
-    cap.textContent = 'ν₁, ν₂ → 10× swish → y';
     document.getElementById('netmap').appendChild(cap);
   })();
 
@@ -504,23 +486,20 @@
       x: xs, y: ys, z: computeZ(),
       colorscale: [[0, gray], [1, gray]],
       showscale: false,
-      opacity: 0.92,
-      contours: { z: { show: false } },
-      lighting: { ambient: 0.75, diffuse: 0.45, specular: 0.1, roughness: 0.7 },
-      hovertemplate: 'ν₁ %{x:.2f}<br>ν₂ %{y:.2f}<br>ŷ %{z:.3f}<extra></extra>'
+      contours: { z: { show:true, start: 0, end: 5, size: 0.1, color: "#888" } },
+      hidesurface: true,
     };
     var dataTrace = {
       type: 'scatter3d', mode: 'markers',
       x: NU1, y: NU2, z: Y,
       marker: {
-        size: 4,
+        size: 5,
         color: residuals,
         colorscale: [[0, css('--err-neg')], [0.5, css('--err-mid')], [1, css('--err-pos')]],
-        cmid: 0, cmin: -maxAbsResidual, cmax: maxAbsResidual,
-        line: { color: c.ink, width: 1 }
+        cmid: 0, cmin: -maxAbsResidual, cmax: +maxAbsResidual,
+        line: { color: c.ink, width: 10 }
       },
       customdata: residuals,
-      hovertemplate: 'ν₁ %{x:.2f}<br>ν₂ %{y:.2f}<br>y %{z:.3f}<br>residual %{customdata:+.3f}<extra>measured</extra>'
     };
     var layout = {
       margin: { l: 0, r: 0, t: 0, b: 0 },
@@ -529,9 +508,12 @@
         bgcolor: c.paper,
         xaxis: { title: 'ν₁', color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
         yaxis: { title: 'ν₂', color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
-        zaxis: { title: 'y', color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
-        camera: { eye: { x: 1.55, y: -1.65, z: 0.85 } }
+        zaxis: { title: 'y',  color: c.inkSoft, gridcolor: c.line, zerolinecolor: c.line, backgroundcolor: c.paper },
+        //camera: { eye: { x: 1.55, y: -1.65, z: 0.85 } },
+				camera: { eye: { x:-0.80, y: +1.10, z: 0.35 } },
+				aspectratio: { x: 1.0, y: 1.0, z: 0.5 }
       },
+      height: 400,
       font: { family: 'IBM Plex Sans, sans-serif', color: c.ink, size: 11 }
     };
     Plotly.react('surface', [surfaceTrace, dataTrace], layout, { displayModeBar: false, responsive: true });
