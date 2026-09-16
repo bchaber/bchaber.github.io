@@ -596,11 +596,10 @@
         color: residuals,
         colorscale: [[0, css('--err-neg')], [0.5, css('--err-mid')], [1, css('--err-pos')]],
         cmid: 0, cmin: -0.5, cmax: +0.5,
-        line: { color: c.ink, width: 1 }
+	line: { color: "black", width: 1 }
       },
       customdata: residuals,
     };
-    console.info(residuals)
     var layout = {
       margin: { l:0, r:0, t:0, b:0 },
       paper_bgcolor: c.paper,
