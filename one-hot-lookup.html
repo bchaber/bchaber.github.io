@@ -60,7 +60,7 @@
 
   .page{
     max-width: 780px; margin: 0; padding: 8px 8px 10px;
-    display: grid; grid-template-columns: 100px 1fr; gap: 5px;
+    display: grid; grid-template-columns: 90px 1fr; gap: 5px;
   }
   header.top{
     grid-column: 1 / -1;
@@ -203,6 +203,9 @@
     font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--copper);
     height:16px; line-height:16px; white-space:nowrap;
   }
+  .embed-strip .embed-cap { text-align: center }
+  .hidden-strip .embed-cap { text-align: left }
+  .prob-strip .embed-cap { text-align: right }
   .ecell{
     font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:10px;
     height:16px; line-height:16px; text-align:center; width:52px;
@@ -511,7 +514,7 @@
     strip.innerHTML = '';
     var cap = document.createElement('div');
     cap.className = 'embed-cap';
-    cap.textContent = hot < 0 ? 'brak znaku' : 'reprezentacja “' + show(VOCAB[hot]) + '”';
+    cap.textContent = hot < 0 ? 'brak znaku' : '“' + show(VOCAB[hot]) + '”';
     strip.appendChild(cap);
     var spacer = document.createElement('div');
     spacer.style.height = '19px'; spacer.style.marginBottom = '5px';
@@ -529,7 +532,7 @@
     var cap = document.createElement('div');
     cap.className = 'embed-cap';
     cap.style.color = 'var(--ink-soft)';
-    cap.textContent = 'ukryty stan';
+    cap.innerHTML = 'ukryty<br/>stan';
     strip.innerHTML = '';
     strip.appendChild(cap);
     var spacer = document.createElement('div');
@@ -557,7 +560,7 @@
     var cap = document.createElement('div');
     cap.className = 'embed-cap';
     cap.style.color = halted ? 'var(--ink-soft)' : 'var(--good)';
-    cap.textContent = halted ? 'prawdopod.' : 'prawdopod.';
+    cap.textContent = halted ? 'P(symbol)' : 'P(symbol)';
     strip.innerHTML = '';
     strip.appendChild(cap);
     var spacer = document.createElement('div');
@@ -577,7 +580,8 @@
         v.style.background = lerpHex(css('--track'), css('--good'), Math.min(1, p[k]));
         v.style.color = p[k] > 0.55 ? css('--paper-raised') : css('--ink');
       }
-      row.appendChild(ch); row.appendChild(v);
+      row.appendChild(ch); 
+      row.appendChild(v);
       strip.appendChild(row);
     }
   }
