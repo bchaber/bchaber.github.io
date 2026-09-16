@@ -192,8 +192,8 @@
   button.reset.is-active{ background:var(--copper); color:var(--paper-raised); border-color:var(--copper); }
 
   .readout{
-    display:flex; align-items:center; justify-content:space-between; background:var(--track);
-    border-radius:8px; padding:10px 12px; margin-top:12px;
+    align-items:center; justify-content:space-between; background:var(--track);
+    border-radius:8px; padding:10px 12px; 
   }
   .readout .label{ font-size:11.5px; color:var(--ink-soft); }
   .readout .value{ font-size:15px; font-weight:600; }
@@ -241,17 +241,16 @@
     <section class="panel">
       <h2>Wagi sieci neuronowej</h2>
       <p class="hint">Każde pokrętło to jedna waga; każdy neuron ma trzy pokrętła.</p>
-      <div class="knob-clusters" id="knob-clusters"></div>
-      <label class="lock-toggle"><input type="checkbox" id="h2-disable"> wyłącz drugi neuron ukryty</label>
       <div class="transport">
-        <button class="reset" id="btn-preset">Rozwiązanie</button>
         <button class="reset" id="btn-scramble">Pomieszaj</button>
         <button class="reset" id="btn-train">Wytrenuj</button>
-      </div>
       <div class="readout">
-        <span class="label">Błąd sieci neuronowej</span>
+        <span class="label">Błąd</span>
         <span class="value mono" id="loss-val">–</span>
       </div>
+      </div>
+      <div class="knob-clusters" id="knob-clusters"></div>
+      <label class="lock-toggle"><input type="checkbox" id="h2-disable"> wyłącz drugi neuron ukryty</label>
       <div class="train-status" id="train-status"></div>
     </section>
 
@@ -772,10 +771,6 @@
     b.addEventListener('click', function(){ setGate(b.dataset.gate); });
   });
 
-  document.getElementById('btn-preset').addEventListener('click', function(){
-    if (isTraining) stopTraining();
-    applyState(PRESET_SOLVED);
-  });
   document.getElementById('btn-scramble').addEventListener('click', function(){
     if (isTraining) stopTraining();
     var next = {};
