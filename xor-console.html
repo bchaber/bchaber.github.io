@@ -310,7 +310,7 @@
 
   function enforceH2Lock(){
     if (!h2Locked) return;
-    state.h2_x1 = 0; state.h2_x2 = 0; state.h2_b = 0;
+    state.h2_x1 = 0; state.h2_x2 = 0; state.h2_b = -30;
   }
 
   function sigmoid(x){ return 1/(1+Math.exp(-x)); }
@@ -471,8 +471,12 @@
     var v = state[key];
     var mag = Math.min(1, Math.abs(v)/MAXMAG);
     line.setAttribute('stroke', v >= 0 ? css('--copper') : css('--err-neg'));
-    line.setAttribute('stroke-width', (1 + 2.6*mag).toFixed(2));
-    line.setAttribute('opacity', (0.15 + 0.75*mag).toFixed(2));
+    line.setAttribute('stroke-width', (5 + 2.6*mag).toFixed(2));
+    line.setAttribute('opacity', (0.5 + 0.75*mag).toFixed(2));
+    if (v == 0)
+	  line.setAttribute('stroke-dasharray', '5,5');
+    else
+	  line.setAttribute('stroke-dasharray', 'none');
   }
 
   function refreshWireGlow(){
@@ -507,7 +511,7 @@
     var el = ledEls[key];
     var t = clamp(v, 0, 1);
     el.lamp.style.background = 'radial-gradient(circle at 35% 30%, ' + lerpHex(css('--track'), css('--copper-ramp-a'), t) + ', ' + lerpHex(css('--track'), css('--copper'), t) + ')';
-    el.lamp.style.boxShadow = (t > 0.05 ? '0 0 ' + (3+11*t) + 'px var(--copper-glow), ' : '') + 'inset 0 1px 3px rgba(0,0,0,.18)';
+    el.lamp.style.boxShadow = (t > 0.5 ? '0 0 ' + (3+11*t) + 'px var(--copper-glow), ' : '') + 'inset 0 1px 3px rgba(0,0,0,.18)';
     //el.value.textContent = el.binary ? v.toFixed(0) : v.toFixed(2);
   }
 
@@ -722,7 +726,7 @@
   function stopTraining(message){
     isTraining = false;
     if (trainTimer) cancelAnimationFrame(trainTimer);
-    document.getElementById('btn-train').textContent = 'Train';
+    document.getElementById('btn-train').textContent = 'Trenuj';
     document.getElementById('btn-train').classList.remove('is-active');
     document.getElementById('train-status').textContent = message || '';
   }
